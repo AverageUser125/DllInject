@@ -13,6 +13,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization
 
+add_subdirectory(thirdparty/imgui)
+
 # Add subdirectories for the two projects
 add_subdirectory("dll")
 add_subdirectory("program")

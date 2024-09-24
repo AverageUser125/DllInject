@@ -12,10 +12,12 @@ set_target_properties(MyProgram PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Get the absolute path to the DLL (but do not link it)
-get_target_property(DLL_PATH MyDLL RUNTIME_OUTPUT_DIRECTORY)
 # Set DLL_PATH based on the PRODUCTION option
 set(DLL_PATH "./MyDLL.dll")
 
 # Pass the DLL path as a definition to the executable
 target_compile_definitions(MyProgram PRIVATE DLL_PATH=\"${DLL_PATH}\")
+
+
+#enet not working yet on linux for some reason
+target_link_libraries(MyProgram PRIVATE imgui)
