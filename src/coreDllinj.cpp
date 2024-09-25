@@ -124,40 +124,46 @@ int injectDll(HANDLE hProcess, const std::wstring& dllPath) {
 	return EXIT_SUCCESS;
 }
 BOOL CALLBACK speichereFenster(HWND hwnd, LPARAM lParam) {
-	const DWORD TITLE_SIZE = 1024;
-	WCHAR windowTitle[TITLE_SIZE];
+	//const DWORD TITLE_SIZE = 1024;
+	//WCHAR windowTitle[TITLE_SIZE];
 
-	GetWindowTextW(hwnd, windowTitle, TITLE_SIZE);
+	//GetWindowTextW(hwnd, windowTitle, TITLE_SIZE);
 
-	int length = ::GetWindowTextLengthW(hwnd);
-	std::wstring title(&windowTitle[0]);
-	if (!IsWindowVisible(hwnd) || length == 0 || title == L"Program Manager") {
+	//int length = ::GetWindowTextLengthW(hwnd);
+	//std::wstring title(&windowTitle[0]);
+	if (!IsWindowVisible(hwnd)) {
 		return TRUE;
 	}
 
 	// Retrieve the pointer passed into this callback, and re-'type' it.
 	// The only way for a C API to pass arbitrary data is by means of a void*.
-	std::vector<std::wstring>& titles = *reinterpret_cast<std::vector<std::wstring>*>(lParam);
-	titles.push_back(title);
+	std::vector<HWND>& hwndHandles = *reinterpret_cast<std::vector<HWND>*>(lParam);
+	hwndHandles.push_back(hwnd);
 
 	return TRUE;
 }
-std::vector<std::wstring> getWindows() {
-	std::vector<std::wstring> titles;
+
+std::vector<HWND> getWindows() {
+	std::vector<HWND> titles;
 	EnumWindows(speichereFenster, reinterpret_cast<LPARAM>(&titles));
 	return titles;
 }
 GLuint LoadIconAsTexture(HICON hIcon);
 std::vector<ProcessInfo> EnumerateRunningApplications() {
 	std::vector<ProcessInfo> processes;
-	std::vector<std::wstring> windNames = getWindows();
-	for (const auto& windowName : windNames) {
-		ProcessInfo info{};
-		info.processName = windowName;
+	std::vector<HWND> windowHandles = getWindows();
+	processes.reserve(windowHandles.size());
 
-		// get window handle
-		HWND windowHandle = FindWindowW(NULL, windowName.c_str());
-		if (windowHandle == NULL) {
+	constexpr DWORD TITLE_SIZE = 1024;
+	WCHAR windowTitle[TITLE_SIZE];
+	for (const auto& windowHandle : windowHandles) {
+		ProcessInfo info{};
+
+		GetWindowTextW(windowHandle, windowTitle, TITLE_SIZE);
+		info.processName = &windowTitle[0];
+		
+		// skip alot of explorer.exe shenanigans
+		if (info.processName.length() == 0 || info.processName == L"Program Manager" || info.processName == L"Windows Input Experience") {
 			continue;
 		}
 
@@ -166,7 +172,7 @@ std::vector<ProcessInfo> EnumerateRunningApplications() {
 			info.processId = 0;
 		}
 
-		HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
+		HANDLE processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
 		if (processHandle != NULL) {
 			WCHAR filename[MAX_PATH]{};
 
@@ -188,7 +194,7 @@ std::vector<ProcessInfo> EnumerateRunningApplications() {
 		}
 		// just use default system icon
 		if (!hIcon) {
-			hIcon = LoadIcon(NULL, IDI_APPLICATION); // Fallback icon
+			hIcon = LoadIconA(NULL, IDI_APPLICATION); // Fallback icon
 		}
 		info.textureId = LoadIconAsTexture(hIcon);
 		DestroyIcon(hIcon);

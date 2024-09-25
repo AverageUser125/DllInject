@@ -9,9 +9,11 @@
 #include <map>
 #include <atomic>
 #include <thread>
+#include <mutex>
 
 static GLFWwindow* window = nullptr;
 static std::vector<ProcessInfo> processes;
+
 // static std::atomic<bool> updateInProgress(false); // Atomic flag to indicate if an update is in progress
 
 GLuint LoadIconAsTexture(HICON hIcon) {
@@ -51,13 +53,11 @@ GLuint LoadIconAsTexture(HICON hIcon) {
 	return textureID;
 }
 
-
 int RenderProcessSelector() {
 	static int selectedProcess = -1;
 	assert(processes.size() != 0);
 
-	int width;
-	int height;
+	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 
 	// Set the next ImGui window position and size to take the entire screen
@@ -69,13 +69,20 @@ int RenderProcessSelector() {
 				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
 	// Adjust the size of icons and text dynamically based on window size
-	float iconSize = std::max(width * 0.03f, 0.01f);	// Set icon size relative to window height
+	float iconSize = std::max(width * 0.03f, 0.01f); // Set icon size relative to window height
 
 	// Set text size for the ImGui elements
 	ImGui::SetWindowFontScale(1.4); // Adjust font scale relative to the default size
-	
+
+	// Define the height of the region for the table, leaving space for buttons at the bottom
+	float tableRegionHeight = height - 100.0f; // Adjust this based on your button height and spacing
+
+	// Start a child region for the table, which can be scrollable independently
+	ImGui::BeginChild("TableRegion", ImVec2(width, tableRegionHeight), true);
+
 	// Use the new ImGui Tables API with 3 columns
-	if (ImGui::BeginTable("ProcessTable", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
+	if (ImGui::BeginTable("ProcessTable", 3,
+						  ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY)) {
 		// Set column widths
 		ImGui::TableSetupColumn("Icon", ImGuiTableColumnFlags_WidthFixed, iconSize + 10); // First column for the icon
 		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch,
@@ -128,26 +135,39 @@ int RenderProcessSelector() {
 		ImGui::EndTable(); // End the table
 	}
 
-	// Set the size of the refresh button (e.g., 40x40 pixels)
+	ImGui::EndChild(); // End the scrollable table region
+
+	// Position the buttons at the bottom of the window, outside of the scrollable table region
+	ImGui::SetCursorPosY(height - 50.0f); // Set position at the bottom of the window, above some padding
+
 	ImVec2 refreshButtonSize(75.0f, 40.0f);
 
-	// Position the refresh button at the bottom right corner
-	ImGui::SetCursorPos(ImVec2(width - refreshButtonSize.x - 10.0f, height - refreshButtonSize.y - 10.0f));
 
-	// Create the refresh button
-	// TODO: make it use threads
+    // Position the refresh button at the right side
+	ImGui::SetCursorPosX(width - refreshButtonSize.x - 20.0f); // Set X position near the right edge
 	if (ImGui::Button("Refresh", refreshButtonSize)) {
+		for (const auto& procInfo : processes) {
+			glDeleteTextures(1, &procInfo.textureId);
+		}
 		processes = EnumerateRunningApplications();
 	}
+	ImGui::SameLine();
 
-	// If a process is selected, show the "Inject DLL" button
+
+	// Position the Inject DLL button to the left of the refresh button
+	ImGui::SetCursorPosX(20.0f); // Position the Inject DLL button near the left side of the window
 	if (selectedProcess >= 0 && selectedProcess < processes.size()) {
-		if (ImGui::Button("Inject DLL", ImVec2((float)width, 40))) {
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));		   // Red background
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // Hovered red
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));  // Active red
+		if (ImGui::Button("Inject DLL", ImVec2((float)width - refreshButtonSize.x - 40.0f, 40.0f))) {
+			ImGui::PopStyleColor(3);
 			ImGui::End();
 			return selectedProcess;
 		}
-	}
+		ImGui::PopStyleColor(3);
 
+	}
 	ImGui::End();
 	return -1;
 }
@@ -197,7 +217,6 @@ void guiInit() {
 
 ProcessInfo guiLoop() {
 	ProcessInfo info{};
-	processes = _processes;
 	while (!glfwWindowShouldClose(window) && info.processId == 0) {
 		glfwPollEvents();
 

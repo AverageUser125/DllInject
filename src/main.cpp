@@ -16,8 +16,7 @@ int main() {
 	std::wcout << L"DLL PATH: " << absoluteDllPath << std::endl;
 
 	guiInit();
-	std::vector<ProcessInfo> processes = EnumerateRunningApplications();
-	ProcessInfo chosenProcess = guiLoop(processes);
+	ProcessInfo chosenProcess = guiLoop();
 	guiCleanup();
 	DWORD processId = chosenProcess.processId;
 	TRY(processId);
@@ -28,11 +27,9 @@ int main() {
 	HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
 	TRY_PRINT(processHandle, "Failed to get process handle");
 
-	// int result = injectDll(processHandle, absoluteDllPath);
+	int result = injectDll(processHandle, absoluteDllPath);
 
 	std::wcout << chosenProcess.processName << std::endl;
-
-	int result = EXIT_SUCCESS;
 
 	if (result == EXIT_SUCCESS) {
 		std::wcout << L"DONE!" << std::endl;
