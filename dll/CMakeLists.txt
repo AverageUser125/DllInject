@@ -1,4 +1,17 @@
-﻿project(MyDLL)
+﻿cmake_minimum_required(VERSION 3.16)
+
+project(MyDLL)
+
+include(CheckIPOSupported)
+check_ipo_supported()
+
+if(MSVC)
+	# Set MSVC runtime library
+	add_compile_options(/arch:AVX2) #make sure SIMD optimizations take place
+
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 add_library(MyDLL SHARED dll.cpp dll.h)
 

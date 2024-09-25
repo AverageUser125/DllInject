@@ -1,20 +1,19 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#define NOMINMAX
-#define VC_EXTRALEAN
-#define WIN32_LEAN_AND_MEAN
-#include <wtypes.h>
-
-
-#include <imgui.h>
+#include "coreDllinj.hpp"
 // #include <Windows.h>
+#include <cctype> 
+#include <WinUser.h>
+#include <shellapi.h>
+#include <tchar.h>
+#include <algorithm>
+#include "gui.hpp"
+#include <cstring>
+#include <fstream>
 
-// bassically an assert
-#define TRY(ptr) do { if (ptr == NULL) {  return EXIT_FAILURE; }} while (0)
-#define TRY_PRINT(ptr, msg) do { if (ptr == NULL) { std::cout << msg; return EXIT_FAILURE; }} while (0)
-#define TRY_PRINT_DO(ptr, msg, func) do { if (ptr == NULL) { std::cout << msg; func; return EXIT_FAILURE; }} while (0)
-
+std::string wstringToString(std::wstring wide) {
+	std::string str(wide.length(), 0);
+	std::transform(wide.begin(), wide.end(), str.begin(), [](wchar_t c) { return (char)c; });
+	return str;
+}
 std::string ErrorToString(DWORD errorMessageID) {
 
 	LPSTR messageBuffer = NULL;
@@ -80,8 +79,8 @@ BOOL EnableDebugPrivilege() {
 
 	return TRUE;
 }
-DWORD GetProcessIDByWindow(const LPCSTR name) {
-	HWND windowHandle = FindWindow(NULL, name);
+DWORD GetProcessIDByWindow(const std::wstring& name) {
+	HWND windowHandle = FindWindowW(NULL, name.c_str());
 	if (windowHandle == NULL) {
 		std::cout << "Window not found\n";
 		return NULL;
@@ -148,31 +147,71 @@ std::vector<std::wstring> getWindows() {
 	EnumWindows(speichereFenster, reinterpret_cast<LPARAM>(&titles));
 	return titles;
 }
+GLuint LoadIconAsTexture(HICON hIcon);
+std::vector<ProcessInfo> EnumerateRunningApplications() {
+	std::vector<ProcessInfo> processes;
+	std::vector<std::wstring> windNames = getWindows();
+	for (const auto& windowName : windNames) {
+		ProcessInfo info{};
+		info.processName = windowName;
 
+		// get window handle
+		HWND windowHandle = FindWindowW(NULL, windowName.c_str());
+		if (windowHandle == NULL) {
+			continue;
+		}
 
-int main() {
-	EnableDebugPrivilege();	
-	
-	// Enable output of Unicode in the console
-	SetConsoleOutputCP(CP_UTF8);
-	std::wcout.imbue(std::locale("en_US.UTF-8"));
+		// get process ID
+		if (GetWindowThreadProcessId(windowHandle, &info.processId) == NULL) {
+			info.processId = 0;
+		}
 
-	// convert to absolute path
-	WCHAR absoluteDllPath[MAX_PATH]{};
-	GetFullPathNameW(L"./MyDLL.dll", MAX_PATH, absoluteDllPath, nullptr);
-	std::wcout << L"DLL PATH: " << absoluteDllPath << std::endl;
+		HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
+		if (processHandle != NULL) {
+			WCHAR filename[MAX_PATH]{};
 
-	DWORD processId = GetProcessIDByWindow("Untitled - Notepad");
-	TRY(processId);
+			if (GetModuleFileNameExW(processHandle, NULL, filename, MAX_PATH) == 0)
+			{
+				info.processPath = L"null";
+			} else {
+				info.processPath = filename;
+			}
 
-	// Open a handle to the target process
-	HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-	TRY_PRINT(processHandle, "Failed to get process handle");
+			CloseHandle(processHandle);
+		}
 
-	int result = injectDll(processHandle, absoluteDllPath);
-
-	if (result == EXIT_SUCCESS) {
-		std::wcout << L"DONE!" << std::endl;
+		// get window icon
+		HICON hIcon = (HICON)GetClassLongPtr(windowHandle, GCLP_HICON);
+		// If no custom icon or default system icon, load icon from the executable
+		if (!hIcon || hIcon == LoadIcon(NULL, IDI_APPLICATION)) {
+			hIcon = ExtractIconW(0, info.processPath.c_str(), 0);
+		}
+		// just use default system icon
+		if (!hIcon) {
+			hIcon = LoadIcon(NULL, IDI_APPLICATION); // Fallback icon
+		}
+		info.textureId = LoadIconAsTexture(hIcon);
+		DestroyIcon(hIcon);
+		processes.push_back(info);
 	}
-	return result;
+	return processes;
+}
+void CopyToClipboard(const std::string& text) {
+	if (OpenClipboard(NULL)) {
+		EmptyClipboard(); // Clear existing clipboard content
+
+		// Allocate a global memory object for the text
+		HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE, text.size() + 1);
+		if (hClipboardData) {
+			// Lock the memory and copy the text to it
+			char* pchData = (char*)GlobalLock(hClipboardData);
+			if (pchData != NULL) {
+				strcpy_s(pchData, text.size() + 1, text.c_str());
+				GlobalUnlock(hClipboardData);
+			}
+			// Place the handle on the clipboard
+			SetClipboardData(CF_TEXT, hClipboardData);
+		}
+		CloseClipboard();
+	}
 }
