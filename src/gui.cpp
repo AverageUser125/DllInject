@@ -158,14 +158,8 @@ void RenderProcessSelector(const std::wstring& absoluteDllPath) {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));  // Active red
 		if (ImGui::Button("Inject DLL", ImVec2((float)width - buttonSize.x - 145.0f, 40.0f))) {
 
-			// Open a handle to the target process
-			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processes[selectedProcess].processId);
-			if (processHandle == NULL) {
-				std::cerr << "Failed to get process handle";
-			} else {
-				injectDll(processHandle, absoluteDllPath);
-				CloseHandle(processHandle);
-			}
+			injectDll(processes[selectedProcess], absoluteDllPath);
+			
 		}
 		ImGui::PopStyleColor(3);
 	}
@@ -175,7 +169,7 @@ void RenderProcessSelector(const std::wstring& absoluteDllPath) {
 	if (selectedProcess >= 0 && selectedProcess < processes.size()) {
 		if (ImGui::Button("Terminate", ImVec2(buttonSize.x + 20.0f, buttonSize.y))) {
 			// Call your process termination logic here
-			TerminateProcessEx(processes[selectedProcess].processId, 0); // Example function call
+			TerminateProcessEx(processes[selectedProcess]); // Example function call
 			refreshOptions();
 		}
 	}
@@ -264,5 +258,4 @@ void guiCleanup() {
 	for (const auto& procInfo : processes) {
 		glDeleteTextures(1, &procInfo.textureId);
 	}
-
 }

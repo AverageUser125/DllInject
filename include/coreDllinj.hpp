@@ -25,11 +25,7 @@ struct ProcessInfo {
 };
 
 std::string wstringToString(std::wstring wide);
-std::string ErrorToString(DWORD errorMessageID);
-std::string GetLastErrorAsString();
-BOOL EnableDebugPrivilege();
-DWORD GetProcessIDByWindow(const std::wstring& name);
-int injectDll(HANDLE hProcess, const std::wstring& dllPath);
-void CopyToClipboard(const std::string& text);
+bool EnableDebugPrivilege();
+void TerminateProcessEx(const ProcessInfo& info);
 std::vector<ProcessInfo> EnumerateRunningApplications();
-BOOL TerminateProcessEx(DWORD dwProcessId, UINT uExitCode);
+int injectDll(const ProcessInfo& info, const std::wstring& dllPath);

@@ -40,19 +40,19 @@ std::string GetLastErrorAsString() {
 	}
 	return ErrorToString(errorMessageID);
 }
-BOOL EnableDebugPrivilege() {
+bool EnableDebugPrivilege() {
 	HANDLE hToken;
 	LUID luid;
 	TOKEN_PRIVILEGES tkp{};
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
 		std::cout << GetLastErrorAsString();
-		return FALSE;
+		return 0;
 	}
 
 	if (!LookupPrivilegeValueA(NULL, SE_DEBUG_NAME, &luid)) {
 		std::cout << GetLastErrorAsString();
-		return FALSE;
+		return 0;
 	}
 
 	tkp.PrivilegeCount = 1;
@@ -66,18 +66,18 @@ BOOL EnableDebugPrivilege() {
 		if (errId == ERROR_NOT_ALL_ASSIGNED) {
 			std::cout << "NOTICE: Run as admin to enable debug priviliges and allows to inject into more "
 						 "applications\n";
-			return FALSE;
+			return 0;
 		}
 		std::cout << ErrorToString(errId);
-		return FALSE;
+		return 0;
 	}
 
 	if (!CloseHandle(hToken)) {
 		std::cout << GetLastErrorAsString();
-		return FALSE;
+		return 0;
 	}
 
-	return TRUE;
+	return 1;
 }
 DWORD GetProcessIDByWindow(const std::wstring& name) {
 	HWND windowHandle = FindWindowW(NULL, name.c_str());
@@ -93,7 +93,10 @@ DWORD GetProcessIDByWindow(const std::wstring& name) {
 	}
 	return processId;
 }
-int injectDll(HANDLE hProcess, const std::wstring& dllPath) {
+
+int injectDll(const ProcessInfo& info, const std::wstring& dllPath){
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, info.processId);
+	TRY_PRINT(hProcess, "Can't open process");
 	std::wcout << dllPath;
 
 	LPVOID dllPathAddress = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -195,36 +198,15 @@ std::vector<ProcessInfo> EnumerateRunningApplications() {
 	}
 	return processes;
 }
-void CopyToClipboard(const std::string& text) {
-	if (OpenClipboard(NULL)) {
-		EmptyClipboard(); // Clear existing clipboard content
-
-		// Allocate a global memory object for the text
-		HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE, text.size() + 1);
-		if (hClipboardData) {
-			// Lock the memory and copy the text to it
-			char* pchData = (char*)GlobalLock(hClipboardData);
-			if (pchData != NULL) {
-				strcpy_s(pchData, text.size() + 1, text.c_str());
-				GlobalUnlock(hClipboardData);
-			}
-			// Place the handle on the clipboard
-			SetClipboardData(CF_TEXT, hClipboardData);
-		}
-		CloseClipboard();
-	}
-}
-
-BOOL TerminateProcessEx(DWORD dwProcessId, UINT uExitCode) {
+void TerminateProcessEx(const ProcessInfo& info) {
 	DWORD dwDesiredAccess = PROCESS_TERMINATE;
 	BOOL bInheritHandle = FALSE;
+	DWORD dwProcessId = info.processId;
 	HANDLE hProcess = OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
 	if (hProcess == NULL)
-		return FALSE;
+		return;
 
-	BOOL result = TerminateProcess(hProcess, uExitCode);
+	BOOL result = TerminateProcess(hProcess, 1);
 
 	CloseHandle(hProcess);
-
-	return result;
 }
