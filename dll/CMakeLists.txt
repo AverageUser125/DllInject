@@ -1,6 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 
-project(MyDLL)
+set(DLL_NAME "relaunchDll")
+
+project(${DLL_NAME})
 
 include(CheckIPOSupported)
 check_ipo_supported()
@@ -13,16 +15,17 @@ if(MSVC)
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-add_library(MyDLL SHARED dll.cpp dll.h)
+add_library(${DLL_NAME} SHARED dll.cpp dll.h)
+target_compile_definitions(${DLL_NAME} PRIVATE DLL_NAME="${DLL_NAME}")
 
-set_property(TARGET MyDLL PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${DLL_NAME} PROPERTY CXX_STANDARD 17)
 
 # Set the output path for the DLL
-set_target_properties(MyDLL PROPERTIES
+set_target_properties(${DLL_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
 # Install the DLL and its headers for other projects
-install(TARGETS MyDLL
+install(TARGETS ${DLL_NAME}
     RUNTIME DESTINATION "${CMAKE_BINARY_DIR}/bin"
 )

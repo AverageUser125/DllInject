@@ -32,3 +32,4 @@ DWORD GetProcessIDByWindow(const std::wstring& name);
 int injectDll(HANDLE hProcess, const std::wstring& dllPath);
 void CopyToClipboard(const std::string& text);
 std::vector<ProcessInfo> EnumerateRunningApplications();
+BOOL TerminateProcessEx(DWORD dwProcessId, UINT uExitCode);

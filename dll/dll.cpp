@@ -9,8 +9,12 @@
 #define TRY_AND_DO(ptr, func) do { if (ptr == NULL) {func;  return; }} while (0)
 #define TRY(ptr) do { if (ptr == NULL) { return; }} while (0)
 
+
+#define TO_WIDE_STRING(s) L##s
+#define WIDE_STRINGIZE(x) TO_WIDE_STRING(#x)
+
 std::wstring GetDllPath() {
-	HMODULE hModule = GetModuleHandleW(L"myDLL.dll"); // Get the handle of the current module
+	HMODULE hModule = GetModuleHandleW(WIDE_STRINGIZE(DLL_NAME ".dll")); // Get the handle of the current module
 	if (hModule) {
 		WCHAR path[MAX_PATH];
 		if (GetModuleFileNameW(hModule, path, MAX_PATH)) {

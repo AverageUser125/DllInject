@@ -9,3 +9,6 @@
 
  This project is meant for educational purposes, if you are to use it for malicious purposes
  or to cause harm to others without their permission I am not responsible for that.
+
+ # Credits
+ https://simpleinjector.org/#free - for logo

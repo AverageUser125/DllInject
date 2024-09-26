@@ -2,19 +2,12 @@
 #include "gui.hpp"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
-
-#include <iostream>
+#include <fstream>
 #include <glad/errorReporting.hpp>
-#include <algorithm>
-#include <map>
-#include <atomic>
-#include <thread>
-#include <mutex>
-
+#include <imguiThemes.h>
+#include "windIcon.h"
 static GLFWwindow* window = nullptr;
 static std::vector<ProcessInfo> processes;
-
-// static std::atomic<bool> updateInProgress(false); // Atomic flag to indicate if an update is in progress
 
 GLuint LoadIconAsTexture(HICON hIcon) {
 	// Get the icon's dimensions
@@ -53,7 +46,12 @@ GLuint LoadIconAsTexture(HICON hIcon) {
 	return textureID;
 }
 
-int RenderProcessSelector() {
+void refreshOptions() {
+	processes.clear();
+	processes = EnumerateRunningApplications();
+}
+
+void RenderProcessSelector(const std::wstring& absoluteDllPath) {
 	static int selectedProcess = -1;
 	assert(processes.size() != 0);
 
@@ -72,7 +70,7 @@ int RenderProcessSelector() {
 	float iconSize = std::max(width * 0.03f, 0.01f); // Set icon size relative to window height
 
 	// Set text size for the ImGui elements
-	ImGui::SetWindowFontScale(1.4); // Adjust font scale relative to the default size
+	ImGui::SetWindowFontScale(1.5); // Adjust font scale relative to the default size
 
 	// Define the height of the region for the table, leaving space for buttons at the bottom
 	float tableRegionHeight = height - 100.0f; // Adjust this based on your button height and spacing
@@ -140,40 +138,53 @@ int RenderProcessSelector() {
 	// Position the buttons at the bottom of the window, outside of the scrollable table region
 	ImGui::SetCursorPosY(height - 50.0f); // Set position at the bottom of the window, above some padding
 
-	ImVec2 refreshButtonSize(75.0f, 40.0f);
+	ImVec2 buttonSize(80.0f, 40.0f);
 
-
-    // Position the refresh button at the right side
-	ImGui::SetCursorPosX(width - refreshButtonSize.x - 20.0f); // Set X position near the right edge
-	if (ImGui::Button("Refresh", refreshButtonSize)) {
+	// Position the refresh button at the right side
+	ImGui::SetCursorPosX(width - buttonSize.x - 5.0f); // Set X position near the right edge
+	if (ImGui::Button("Refresh", buttonSize)) {
 		for (const auto& procInfo : processes) {
 			glDeleteTextures(1, &procInfo.textureId);
 		}
-		processes = EnumerateRunningApplications();
+		refreshOptions();
 	}
 	ImGui::SameLine();
 
-
 	// Position the Inject DLL button to the left of the refresh button
-	ImGui::SetCursorPosX(20.0f); // Position the Inject DLL button near the left side of the window
+	ImGui::SetCursorPosX(25.0f); // Position the Inject DLL button near the left side of the window
 	if (selectedProcess >= 0 && selectedProcess < processes.size()) {
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));		   // Red background
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // Hovered red
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));  // Active red
-		if (ImGui::Button("Inject DLL", ImVec2((float)width - refreshButtonSize.x - 40.0f, 40.0f))) {
-			ImGui::PopStyleColor(3);
-			ImGui::End();
-			return selectedProcess;
+		if (ImGui::Button("Inject DLL", ImVec2((float)width - buttonSize.x - 145.0f, 40.0f))) {
+
+			// Open a handle to the target process
+			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processes[selectedProcess].processId);
+			if (processHandle == NULL) {
+				std::cerr << "Failed to get process handle";
+			} else {
+				injectDll(processHandle, absoluteDllPath);
+				CloseHandle(processHandle);
+			}
 		}
 		ImGui::PopStyleColor(3);
-
 	}
+
+	// Add the Terminate button next to the Inject DLL button
+	ImGui::SameLine();
+	if (selectedProcess >= 0 && selectedProcess < processes.size()) {
+		if (ImGui::Button("Terminate", ImVec2(buttonSize.x + 20.0f, buttonSize.y))) {
+			// Call your process termination logic here
+			TerminateProcessEx(processes[selectedProcess].processId, 0); // Example function call
+			refreshOptions();
+		}
+	}
+
 	ImGui::End();
-	return -1;
 }
 
-void guiInit() {
 
+void guiInit() {
 	if (!glfwInit()) {
 		std::cerr << "Failed to initialize GLFW" << std::endl;
 		return;
@@ -187,6 +198,7 @@ void guiInit() {
 	}
 
 	glfwMakeContextCurrent(window);
+
 	glfwSwapInterval(1); // Enable vsync
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -206,32 +218,28 @@ void guiInit() {
 	// io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;		  // IF using Docking Branch
 	(void)io;
 
-	ImGui::StyleColorsDark();
-
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
+	
+	imguiThemes::embraceTheDarkness();
+	// Set the window icon
 
-	processes = EnumerateRunningApplications();
+	const GLFWimage icon{windowIcon_width, windowIcon_height, (unsigned char*)(windowIcon)};
+	glfwSetWindowIcon(window, 1, &icon);
+
+	refreshOptions();
 }
 
 
-ProcessInfo guiLoop() {
-	ProcessInfo info{};
-	while (!glfwWindowShouldClose(window) && info.processId == 0) {
+void guiLoop(const std::wstring& absoluteDllPath) {
+	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-
-
-		int selectedIndex =  RenderProcessSelector();
-		if (selectedIndex != -1) {
-			info = processes[selectedIndex];
-		}
-
-
+		RenderProcessSelector(absoluteDllPath);
 
 		ImGui::Render();
 		int display_w, display_h;
@@ -243,7 +251,6 @@ ProcessInfo guiLoop() {
 
 		glfwSwapBuffers(window);
 	}
-	return info;
 }
 
 void guiCleanup() {

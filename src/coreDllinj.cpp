@@ -94,6 +94,7 @@ DWORD GetProcessIDByWindow(const std::wstring& name) {
 	return processId;
 }
 int injectDll(HANDLE hProcess, const std::wstring& dllPath) {
+	std::wcout << dllPath;
 
 	LPVOID dllPathAddress = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	TRY_PRINT(dllPathAddress, "Failed to allocate memory in target process");
@@ -124,13 +125,6 @@ int injectDll(HANDLE hProcess, const std::wstring& dllPath) {
 	return EXIT_SUCCESS;
 }
 BOOL CALLBACK speichereFenster(HWND hwnd, LPARAM lParam) {
-	//const DWORD TITLE_SIZE = 1024;
-	//WCHAR windowTitle[TITLE_SIZE];
-
-	//GetWindowTextW(hwnd, windowTitle, TITLE_SIZE);
-
-	//int length = ::GetWindowTextLengthW(hwnd);
-	//std::wstring title(&windowTitle[0]);
 	if (!IsWindowVisible(hwnd)) {
 		return TRUE;
 	}
@@ -142,7 +136,6 @@ BOOL CALLBACK speichereFenster(HWND hwnd, LPARAM lParam) {
 
 	return TRUE;
 }
-
 std::vector<HWND> getWindows() {
 	std::vector<HWND> titles;
 	EnumWindows(speichereFenster, reinterpret_cast<LPARAM>(&titles));
@@ -220,4 +213,18 @@ void CopyToClipboard(const std::string& text) {
 		}
 		CloseClipboard();
 	}
+}
+
+BOOL TerminateProcessEx(DWORD dwProcessId, UINT uExitCode) {
+	DWORD dwDesiredAccess = PROCESS_TERMINATE;
+	BOOL bInheritHandle = FALSE;
+	HANDLE hProcess = OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+	if (hProcess == NULL)
+		return FALSE;
+
+	BOOL result = TerminateProcess(hProcess, uExitCode);
+
+	CloseHandle(hProcess);
+
+	return result;
 }
