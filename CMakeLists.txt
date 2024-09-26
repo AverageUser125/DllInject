@@ -51,7 +51,7 @@ set_target_properties(exeLocker PROPERTIES
 target_compile_definitions(exeLocker PRIVATE NO_CONSOLE=1)
 target_compile_definitions(exeLocker PRIVATE DLL_NAME="${DLL_NAME}")
 # Pass the DLL path as a definition to the executable
-target_compile_definitions(exeLocker PRIVATE NO_CONSOLE=NO_CONSOLE)
+target_compile_definitions(exeLocker PRIVATE NO_CONSOLE=${NO_CONSOLE})
 target_compile_definitions(exeLocker PUBLIC GLFW_INCLUDE_NONE=1) 
 
 # Enet not working yet on linux for some reason

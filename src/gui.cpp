@@ -2,17 +2,21 @@
 #include "gui.hpp"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
-#include <fstream>
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
 #include "windIcon.h"
+
 static GLFWwindow* window = nullptr;
-static std::vector<ProcessInfo> processes;
+static std::vector<ProcessInfo> sharedProcesses;
+
+void refreshOptions() {
+	sharedProcesses = EnumerateRunningApplications();
+}
 
 GLuint LoadIconAsTexture(HICON hIcon) {
 	// Get the icon's dimensions
 	ICONINFO iconInfo;
-	GetIconInfo(hIcon, &iconInfo); 
+	GetIconInfo(hIcon, &iconInfo);
 
 	// Create a device context and a bitmap
 	HDC hdc = GetDC(NULL);
@@ -46,12 +50,7 @@ GLuint LoadIconAsTexture(HICON hIcon) {
 	return textureID;
 }
 
-void refreshOptions() {
-	processes.clear();
-	processes = EnumerateRunningApplications();
-}
-
-void RenderProcessSelector(const std::wstring& absoluteDllPath) {
+void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstring& absoluteDllPath) {
 	static int selectedProcess = -1;
 	assert(processes.size() != 0);
 
@@ -224,6 +223,7 @@ void guiInit() {
 }
 
 void guiLoop(const std::wstring& absoluteDllPath) {
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
@@ -231,7 +231,7 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		RenderProcessSelector(absoluteDllPath);
+		RenderProcessSelector(sharedProcesses, absoluteDllPath);
 
 		ImGui::Render();
 		int display_w, display_h;
@@ -243,6 +243,7 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 
 		glfwSwapBuffers(window);
 	}
+
 }
 
 void guiCleanup() {
@@ -255,7 +256,7 @@ void guiCleanup() {
 	}
 	// TODO: have a seperate array just for texture so this doesn't need a loop and can just do
 	// glDeleteTexture(texArr.size(), texArr.data())
-	for (const auto& procInfo : processes) {
+	for (const auto& procInfo : sharedProcesses) {
 		glDeleteTextures(1, &procInfo.textureId);
 	}
 }
