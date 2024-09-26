@@ -183,7 +183,6 @@ void RenderProcessSelector(const std::wstring& absoluteDllPath) {
 	ImGui::End();
 }
 
-
 void guiInit() {
 	if (!glfwInit()) {
 		std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -229,7 +228,6 @@ void guiInit() {
 
 	refreshOptions();
 }
-
 
 void guiLoop(const std::wstring& absoluteDllPath) {
 	while (!glfwWindowShouldClose(window)) {
