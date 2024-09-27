@@ -222,6 +222,8 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 
 	refreshOptions();
 	
+
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
@@ -229,8 +231,6 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-
-		// std::vector<ProcessInfo> localProcesses = sharedProcesses;
 
 		RenderProcessSelector(sharedProcesses, absoluteDllPath);
 
@@ -244,6 +244,7 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 
 		glfwSwapBuffers(window);
 	}
+
 
 	guiCleanup();
 }
