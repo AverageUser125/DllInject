@@ -14,7 +14,7 @@
 #define WIDE_STRINGIZE(x) TO_WIDE_STRING(#x)
 
 std::wstring GetDllPath() {
-	HMODULE hModule = GetModuleHandleW(WIDE_STRINGIZE(DLL_NAME ".dll")); // Get the handle of the current module
+	HMODULE hModule = GetModuleHandleW(TO_WIDE_STRING(DLL_NAME ".dll")); // Get the handle of the current module
 	if (hModule) {
 		WCHAR path[MAX_PATH];
 		if (GetModuleFileNameW(hModule, path, MAX_PATH)) {
@@ -30,11 +30,11 @@ void injectDll(HANDLE hProcess, const std::wstring& dllPath) {
 	LPVOID dllPathAddress = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	TRY(dllPathAddress);
 
-	const auto freeMem = [hProcess, dllPathAddress]() { VirtualFreeEx(hProcess, dllPathAddress, 0, MEM_RELEASE); };	
+	const auto freeMem = [hProcess, dllPathAddress]() { VirtualFreeEx(hProcess, dllPathAddress, 0, MEM_RELEASE); };
 
-	TRY_AND_DO(WriteProcessMemory(hProcess, dllPathAddress, dllPath.data(), (dllPath.size() + 1) * sizeof(wchar_t), NULL),
-			   freeMem());
-	
+	TRY_AND_DO(
+		WriteProcessMemory(hProcess, dllPathAddress, dllPath.data(), (dllPath.size() + 1) * sizeof(wchar_t), NULL), freeMem());
+
 	// Get the address of the LoadLibraryA function in the kernel32.dll module
 	HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
 	TRY_AND_DO(kernel32, freeMem());
@@ -45,7 +45,7 @@ void injectDll(HANDLE hProcess, const std::wstring& dllPath) {
 	// Create a remote thread in the target process to load the DLL
 	HANDLE remoteThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)loadLibraryAddress,
 											 dllPathAddress, NULL, NULL);
-	TRY_AND_DO(remoteThread, freeMem());
+	TRY_AND_DO(remoteThread, freeMem);
 
 	// Wait for the remote thread to finish
 	WaitForSingleObject(remoteThread, INFINITE);
