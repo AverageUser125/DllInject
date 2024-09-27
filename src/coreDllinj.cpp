@@ -92,7 +92,6 @@ DWORD GetProcessIDByWindow(const std::wstring& name) {
 int injectDll(const ProcessInfo& info, const std::wstring& dllPath){
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, info.processId);
 	TRY_PRINT(hProcess, "Can't open process");
-	std::wcout << dllPath << L'\n';
 
 	LPVOID dllPathAddress = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	TRY_PRINT(dllPathAddress, "Failed to allocate memory in target process");

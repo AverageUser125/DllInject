@@ -67,16 +67,16 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 
 	// Begin the ImGui window with these dimensions
 	ImGui::Begin("Running Applications", nullptr,
-				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// Adjust the size of icons and text dynamically based on window size
 	float iconSize = std::max(width * 0.03f, 0.01f); // Set icon size relative to window height
 
 	// Set text size for the ImGui elements
-	ImGui::SetWindowFontScale(1.5); // Adjust font scale relative to the default size
+	ImGui::SetWindowFontScale(1.25); // Adjust font scale relative to the default size
 
 	// Define the height of the region for the table, leaving space for buttons at the bottom
-	float tableRegionHeight = height - 100.0f; // Adjust this based on your button height and spacing
+	float tableRegionHeight = height - 75.0f; // Adjust this based on your button height and spacing
 
 	// Start a child region for the table, which can be scrollable independently
 	ImGui::BeginChild("TableRegion", ImVec2(width, tableRegionHeight), true);
@@ -166,7 +166,7 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 	// Add the Terminate button next to the Inject DLL button
 	ImGui::SameLine();
 	if (selectedProcess >= 0 && selectedProcess < processes.size()) {
-		if (ImGui::Button("Terminate", ImVec2(buttonSize.x + 20.0f, buttonSize.y))) {
+		if (ImGui::Button("Terminate", ImVec2(buttonSize.x + 25.0f, buttonSize.y))) {
 			// Call your process termination logic here
 			TerminateProcessEx(processes[selectedProcess]); // Example function call
 			refreshOptions();
@@ -204,10 +204,9 @@ void guiInit() {
 	
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO(); 
 	io.ConfigFlags |= ImGuiWindowFlags_NoResize;
 	io.IniFilename = NULL;
-	// io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;		  // IF using Docking Branch
 	(void)io;
 
 	// font
@@ -216,12 +215,13 @@ void guiInit() {
 	builder.AddRanges(io.Fonts->GetGlyphRangesHebrew()); // Add one of the default ranges
 	builder.BuildRanges(&ranges); // Build the final result (ordered ranges with all the unique characters submitted)
 	
-	io.Fonts->AddFontDefault();
+	// io.Fonts->AddFontDefault();
 	ImFontConfig font_cfg;
-	font_cfg.MergeMode = true;
+	font_cfg.MergeMode = false;
 	font_cfg.FontDataOwnedByAtlas = false;
+	// the 22 is the font size that I choose, 22 seems nice
 	ImFont* font = io.Fonts->AddFontFromMemoryTTF((void*)(NotoSansHebew_data), NotoSansHebew_size,
-												  NotoSansHebrew_pixelsize, &font_cfg, ranges.Data);
+												  22, &font_cfg, ranges.Data);
 	io.Fonts->Build();
 	
 
@@ -276,18 +276,15 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 }
 
 void guiCleanup() {
+	for (const auto& procInfo : loadedIcons) {
+		glDeleteTextures(1, &procInfo.second);
+	}
+
 	if (window) {
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 		glfwDestroyWindow(window);
 		glfwTerminate();
-	}
-	
-
-	// TODO: have a seperate array just for texture so this doesn't need a loop and can just do
-	// glDeleteTexture(texArr.size(), texArr.data())
-	for (const auto& procInfo : loadedIcons) {
-		glDeleteTextures(1, &procInfo.second);
 	}
 }

@@ -35,7 +35,8 @@ add_subdirectory(dll)
 project(MyProgram)
 
 # Change the executable name to exeLocker
-add_executable(exeLocker "src/coreDllinj.cpp" "src/gui.cpp" "src/main.cpp" "resources/app.o" "resources/app.rc" "src/font.cpp" "include/font.h")
+file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+add_executable(exeLocker ${MY_SOURCES})
 
 set_property(TARGET exeLocker PROPERTY CXX_STANDARD 17)
 
@@ -47,10 +48,14 @@ set_target_properties(exeLocker PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-set_target_properties(exeLocker PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
 target_compile_definitions(exeLocker PRIVATE DLL_NAME="${DLL_NAME}")
 # Pass the DLL path as a definition to the executable
 target_compile_definitions(exeLocker PUBLIC GLFW_INCLUDE_NONE=1) 
+
+if(MSVC)
+	target_compile_definitions(exeLocker PUBLIC _CRT_SECURE_NO_WARNINGS)
+	set_target_properties(exeLocker PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
+endif()
 
 # Enet not working yet on linux for some reason
 target_link_libraries(exeLocker PRIVATE imgui glfw glad)

@@ -14,7 +14,7 @@
 #define WIDE_STRINGIZE(x) TO_WIDE_STRING(#x)
 
 std::wstring GetDllPath() {
-	HMODULE hModule = GetModuleHandleW(TO_WIDE_STRING(DLL_NAME ".dll")); // Get the handle of the current module
+	HMODULE hModule = GetModuleHandleW(TO_WIDE_STRING("" DLL_NAME "" ".dll")); // Get the handle of the current module
 	if (hModule) {
 		WCHAR path[MAX_PATH];
 		if (GetModuleFileNameW(hModule, path, MAX_PATH)) {
