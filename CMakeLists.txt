@@ -47,7 +47,7 @@ set_target_properties(exeLocker PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# set_target_properties(exeLocker PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
+set_target_properties(exeLocker PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
 target_compile_definitions(exeLocker PRIVATE DLL_NAME="${DLL_NAME}")
 # Pass the DLL path as a definition to the executable
 target_compile_definitions(exeLocker PUBLIC GLFW_INCLUDE_NONE=1) 

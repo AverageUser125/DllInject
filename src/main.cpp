@@ -2,7 +2,7 @@
 #include "gui.hpp"
 #include <cstdio>
 
-// #define NO_CONSOLE
+#define NO_CONSOLE
 
 int main() {
 	EnableDebugPrivilege();

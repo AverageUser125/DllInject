@@ -6,6 +6,8 @@
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
 
+#include <chrono>
+
 static GLFWwindow* window = nullptr;
 static std::vector<ProcessInfo> sharedProcesses;
 
@@ -221,11 +223,19 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 	guiInit();
 
 	refreshOptions();
-	
 
+	auto lastRefreshTime = std::chrono::steady_clock::now();
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+		
+		// Check if REFRESH_TIME seconds have passed
+		auto currentTime = std::chrono::steady_clock::now();
+		std::chrono::duration<double> elapsedTime = currentTime - lastRefreshTime;
+		if (elapsedTime.count() >= REFRESH_TIME) {
+			refreshOptions();
+			lastRefreshTime = currentTime; // Reset the timer
+		}
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
