@@ -220,8 +220,8 @@ void guiInit() {
 	ImFontConfig font_cfg;
 	font_cfg.MergeMode = true;
 	font_cfg.FontDataOwnedByAtlas = false;
-	ImFont* font =
-		io.Fonts->AddFontFromMemoryTTF((void*)(NotoSansHebew_data), NotoSansHebew_size, 16, &font_cfg, ranges.Data);
+	ImFont* font = io.Fonts->AddFontFromMemoryTTF((void*)(NotoSansHebew_data), NotoSansHebew_size,
+												  NotoSansHebrew_pixelsize, &font_cfg, ranges.Data);
 	io.Fonts->Build();
 	
 
