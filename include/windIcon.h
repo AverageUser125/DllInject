@@ -1,4 +1,9 @@
 #pragma once
+
+constexpr int windowIcon_width = 64;
+constexpr int windowIcon_height = 64;
+constexpr int windowIcon_channels = 4;
+
 constexpr unsigned char windowIcon[] = {
 
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -1368,7 +1373,3 @@ constexpr unsigned char windowIcon[] = {
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
    0x00, 0x00, 0x00, 0x00
 };
-
-constexpr int windowIcon_width = 64;
-constexpr int windowIcon_height = 64;
-constexpr int windowIcon_channels = 4;
