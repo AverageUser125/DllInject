@@ -27,8 +27,6 @@ struct ProcessInfo {
 // proccess Id is not a valid key, since there can be the same program launched multiple times
 // the only way without the path is to make an int64 identifier which just is a counter
 extern std::map<std::wstring, GLuint> loadedIcons;
-
-std::string wstringToString(std::wstring wide);
 bool EnableDebugPrivilege();
 void TerminateProcessEx(const ProcessInfo& info);
 void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses);

@@ -3505,6 +3505,15 @@ const ImWchar*  ImFontAtlas::GetGlyphRangesCyrillic()
     return &ranges[0];
 }
 
+const ImWchar* ImFontAtlas::GetGlyphRangesHebrew() {
+	static const ImWchar ranges[] = {
+		0x0590, 0x05FF, // Hebrew letters and diacritical marks
+		0xFB1D, 0xFB4F, // Alphabetic Presentation Forms
+		0,				// Terminator
+	};
+	return &ranges[0];
+}
+
 const ImWchar*  ImFontAtlas::GetGlyphRangesThai()
 {
     static const ImWchar ranges[] =

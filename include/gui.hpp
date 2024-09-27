@@ -7,6 +7,7 @@
 #include <string>
 #include "coreDllInj.hpp"
 
+constexpr auto REFRESH_TIME = 2.0;
 
 constexpr int screenHeight = 720;
 constexpr int screenWidth = 1280;

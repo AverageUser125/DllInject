@@ -35,7 +35,7 @@ add_subdirectory(dll)
 project(MyProgram)
 
 # Change the executable name to exeLocker
-add_executable(exeLocker "src/coreDllinj.cpp" "src/gui.cpp" "src/main.cpp" "resources/app.o" "resources/app.rc")
+add_executable(exeLocker "src/coreDllinj.cpp" "src/gui.cpp" "src/main.cpp" "resources/app.o" "resources/app.rc" "src/font.cpp" "include/font.h")
 
 set_property(TARGET exeLocker PROPERTY CXX_STANDARD 17)
 

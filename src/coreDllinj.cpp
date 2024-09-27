@@ -7,14 +7,8 @@
 #include "gui.hpp"
 #include <map>
 
-
 std::map<std::wstring, GLuint> loadedIcons;
 
-std::string wstringToString(std::wstring wide) {
-	std::string str(wide.length(), 0);
-	std::transform(wide.begin(), wide.end(), str.begin(), [](wchar_t c) { return (char)c; });
-	return str;
-}
 std::string ErrorToString(DWORD errorMessageID) {
 
 	LPSTR messageBuffer = NULL;

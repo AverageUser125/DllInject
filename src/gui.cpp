@@ -1,10 +1,12 @@
 
 #include "gui.hpp"
 #include "windIcon.h"
+#include "NotoSansHebrew.hpp"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
+#include "font.h"
 
 #include <chrono>
 
@@ -117,7 +119,7 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 			ImGui::SameLine(); // Continue in the same line for text display
 
 			// Display the wrapped process name
-			std::string processDisplayName = wstringToString(info.processName);
+			std::string processDisplayName = processHebrewText(info.processName);
 			ImGui::PushTextWrapPos(ImGui::GetColumnWidth()); // Manually set the wrap width
 			ImGui::TextWrapped("%s", processDisplayName.c_str());
 			ImGui::PopTextWrapPos();
@@ -126,7 +128,7 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 			ImGui::TableSetColumnIndex(2);
 
 			// Display the wrapped process path
-			std::string processDisplayPath = wstringToString(info.processPath);
+			std::string processDisplayPath = processHebrewText(info.processPath);
 			ImGui::TextWrapped("%s", processDisplayPath.c_str());
 
 			ImGui::PopID(); // Pop the ID after the row
@@ -208,6 +210,21 @@ void guiInit() {
 	// io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;		  // IF using Docking Branch
 	(void)io;
 
+	// font
+	ImVector<ImWchar> ranges;
+	ImFontGlyphRangesBuilder builder;
+	builder.AddRanges(io.Fonts->GetGlyphRangesHebrew()); // Add one of the default ranges
+	builder.BuildRanges(&ranges); // Build the final result (ordered ranges with all the unique characters submitted)
+	
+	io.Fonts->AddFontDefault();
+	ImFontConfig font_cfg;
+	font_cfg.MergeMode = true;
+	font_cfg.FontDataOwnedByAtlas = false;
+	ImFont* font =
+		io.Fonts->AddFontFromMemoryTTF((void*)(NotoSansHebew_data), NotoSansHebew_size, 16, &font_cfg, ranges.Data);
+	io.Fonts->Build();
+	
+
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 	
@@ -216,7 +233,6 @@ void guiInit() {
 
 	const GLFWimage icon{windowIcon_width, windowIcon_height, (unsigned char*)(windowIcon)};
 	glfwSetWindowIcon(window, 1, &icon);
-
 }
 
 void guiLoop(const std::wstring& absoluteDllPath) {
