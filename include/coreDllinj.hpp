@@ -18,6 +18,7 @@
 #define TRY_PRINT(ptr, msg) do { if (ptr == NULL) { std::cerr << msg; return EXIT_FAILURE; }} while (0)
 #define TRY_PRINT_DO(ptr, msg, func) do { if (ptr == NULL) { std::cerr << msg; func; return EXIT_FAILURE; }} while (0)
 
+
 struct ProcessInfo {
 	DWORD processId = 0;
 	std::wstring processName = L"";
