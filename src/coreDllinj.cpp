@@ -8,6 +8,7 @@
 #include "gui.hpp"
 #include <cstring>
 #include <fstream>
+#include <map>
 
 std::string wstringToString(std::wstring wide) {
 	std::string str(wide.length(), 0);
@@ -97,7 +98,7 @@ DWORD GetProcessIDByWindow(const std::wstring& name) {
 int injectDll(const ProcessInfo& info, const std::wstring& dllPath){
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, info.processId);
 	TRY_PRINT(hProcess, "Can't open process");
-	std::wcout << dllPath;
+	std::wcout << dllPath << L'\n';
 
 	LPVOID dllPathAddress = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	TRY_PRINT(dllPathAddress, "Failed to allocate memory in target process");
@@ -145,59 +146,90 @@ std::vector<HWND> getWindows() {
 	return titles;
 }
 GLuint LoadIconAsTexture(HICON hIcon);
-std::vector<ProcessInfo> EnumerateRunningApplications() {
-	std::vector<ProcessInfo> processes;
+
+void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 	std::vector<HWND> windowHandles = getWindows();
-	processes.reserve(windowHandles.size());
+	std::vector<ProcessInfo> newProcesses;
+	newProcesses.reserve(windowHandles.size());
 
 	constexpr DWORD TITLE_SIZE = 1024;
 	WCHAR windowTitle[TITLE_SIZE];
+
+	// Vector to track which cached processes were visited
+	std::vector<bool> visited(cachedProcesses.size(), false);
+
 	for (const auto& windowHandle : windowHandles) {
 		ProcessInfo info{};
 
+		// Get window title
 		GetWindowTextW(windowHandle, windowTitle, TITLE_SIZE);
 		info.processName = &windowTitle[0];
-		
-		// skip alot of explorer.exe shenanigans
-		if (info.processName.length() == 0 || info.processName == L"Program Manager" || info.processName == L"Windows Input Experience") {
+
+		// Skip explorer.exe and irrelevant windows
+		if (info.processName.length() == 0 || info.processName == L"Program Manager" ||
+			info.processName == L"Windows Input Experience") {
 			continue;
 		}
 
-		// get process ID
+		// Get process ID
 		if (GetWindowThreadProcessId(windowHandle, &info.processId) == NULL) {
 			info.processId = 0;
 		}
 
-		HANDLE processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
+		// Check if this process is already cached
+		auto it = std::find_if(cachedProcesses.begin(), cachedProcesses.end(),
+							   [&](const ProcessInfo& p) { return p.processId == info.processId; });
+
+		if (it != cachedProcesses.end()) {
+			// Process is already cached, mark as visited
+			size_t index = std::distance(cachedProcesses.begin(), it);
+			visited[index] = true;
+			newProcesses.push_back(*it); // Reuse the existing process info
+			continue;
+		}
+		// Process is new, gather additional information
+
+		// Open process handle
+		HANDLE processHandle =
+			OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
 		if (processHandle != NULL) {
 			WCHAR filename[MAX_PATH]{};
-
-			if (GetModuleFileNameExW(processHandle, NULL, filename, MAX_PATH) == 0)
-			{
+			if (GetModuleFileNameExW(processHandle, NULL, filename, MAX_PATH) == 0) {
 				info.processPath = L"null";
 			} else {
 				info.processPath = filename;
 			}
-
 			CloseHandle(processHandle);
 		}
 
-		// get window icon
+		// Get window icon
 		HICON hIcon = (HICON)GetClassLongPtr(windowHandle, GCLP_HICON);
-		// If no custom icon or default system icon, load icon from the executable
 		if (!hIcon || hIcon == LoadIcon(NULL, IDI_APPLICATION)) {
 			hIcon = ExtractIconW(0, info.processPath.c_str(), 0);
 		}
-		// just use default system icon
 		if (!hIcon) {
 			hIcon = LoadIconA(NULL, IDI_APPLICATION); // Fallback icon
 		}
 		info.textureId = LoadIconAsTexture(hIcon);
 		DestroyIcon(hIcon);
-		processes.push_back(info);
+
+		// Add new process to the list
+		newProcesses.push_back(info);
 	}
-	return processes;
+
+
+	// Clean up resources of processes that were not visited (no longer running)
+	for (size_t i = 0; i < cachedProcesses.size(); ++i) {
+		if (!visited[i]) {
+			// Process no longer exists, free OpenGL resources or any other allocated resources
+			glDeleteTextures(1, &cachedProcesses[i].textureId);
+		}
+	}
+
+	// Replace old cached processes with the updated list
+	cachedProcesses = std::move(newProcesses);
 }
+
 void TerminateProcessEx(const ProcessInfo& info) {
 	DWORD dwDesiredAccess = PROCESS_TERMINATE;
 	BOOL bInheritHandle = FALSE;

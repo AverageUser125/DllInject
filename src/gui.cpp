@@ -10,7 +10,7 @@ static GLFWwindow* window = nullptr;
 static std::vector<ProcessInfo> sharedProcesses;
 
 void refreshOptions() {
-	sharedProcesses = EnumerateRunningApplications();
+	EnumerateRunningApplications(sharedProcesses);
 }
 
 GLuint LoadIconAsTexture(HICON hIcon) {
@@ -142,9 +142,6 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 	// Position the refresh button at the right side
 	ImGui::SetCursorPosX(width - buttonSize.x - 5.0f); // Set X position near the right edge
 	if (ImGui::Button("Refresh", buttonSize)) {
-		for (const auto& procInfo : processes) {
-			glDeleteTextures(1, &procInfo.textureId);
-		}
 		refreshOptions();
 	}
 	ImGui::SameLine();
@@ -156,9 +153,7 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // Hovered red
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));  // Active red
 		if (ImGui::Button("Inject DLL", ImVec2((float)width - buttonSize.x - 145.0f, 40.0f))) {
-
 			injectDll(processes[selectedProcess], absoluteDllPath);
-			
 		}
 		ImGui::PopStyleColor(3);
 	}

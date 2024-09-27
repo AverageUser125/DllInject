@@ -27,5 +27,6 @@ struct ProcessInfo {
 std::string wstringToString(std::wstring wide);
 bool EnableDebugPrivilege();
 void TerminateProcessEx(const ProcessInfo& info);
-std::vector<ProcessInfo> EnumerateRunningApplications();
+void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses);
+
 int injectDll(const ProcessInfo& info, const std::wstring& dllPath);
