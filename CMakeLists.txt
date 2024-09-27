@@ -26,7 +26,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(thirdparty/imgui)
 add_subdirectory(thirdparty/glad)
-add_subdirectory(thirdparty/glfw-3.3.2)
+add_subdirectory(thirdparty/glfw)
 
 set(DLL_NAME "relaunchDll")
 # add dll since we need it
