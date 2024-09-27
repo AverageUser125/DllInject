@@ -36,7 +36,7 @@ project(MyProgram)
 
 # Change the executable name to exeLocker
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-add_executable(exeLocker ${MY_SOURCES})
+add_executable(exeLocker ${MY_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/resources/app.o")
 
 set_property(TARGET exeLocker PROPERTY CXX_STANDARD 17)
 
