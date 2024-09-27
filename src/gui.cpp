@@ -1,10 +1,10 @@
 
 #include "gui.hpp"
+#include "windIcon.h"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
-#include "windIcon.h"
 
 static GLFWwindow* window = nullptr;
 static std::vector<ProcessInfo> sharedProcesses;
@@ -214,17 +214,22 @@ void guiInit() {
 	const GLFWimage icon{windowIcon_width, windowIcon_height, (unsigned char*)(windowIcon)};
 	glfwSetWindowIcon(window, 1, &icon);
 
-	refreshOptions();
 }
 
 void guiLoop(const std::wstring& absoluteDllPath) {
+	guiInit();
 
+	refreshOptions();
+	
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+
+		// std::vector<ProcessInfo> localProcesses = sharedProcesses;
 
 		RenderProcessSelector(sharedProcesses, absoluteDllPath);
 
@@ -239,6 +244,7 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 		glfwSwapBuffers(window);
 	}
 
+	guiCleanup();
 }
 
 void guiCleanup() {
@@ -249,6 +255,8 @@ void guiCleanup() {
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}
+	
+
 	// TODO: have a seperate array just for texture so this doesn't need a loop and can just do
 	// glDeleteTexture(texArr.size(), texArr.data())
 	for (const auto& procInfo : sharedProcesses) {

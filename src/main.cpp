@@ -23,9 +23,7 @@ int main() {
 	GetFullPathNameW(L"./" DLL_NAME ".dll", MAX_PATH, absoluteDllPath, nullptr);
 	std::wcout << L"DLL PATH: " << absoluteDllPath << std::endl;
 
-	guiInit();
 	guiLoop(absoluteDllPath);
-	guiCleanup();
 	// DWORD processId = GetProcessIDByWindow("Untitled - Notepad");
 	// TRY(processId);
 
