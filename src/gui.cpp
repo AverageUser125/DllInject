@@ -205,6 +205,7 @@ void guiInit() {
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); 
 	io.ConfigFlags |= ImGuiWindowFlags_NoResize;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.IniFilename = NULL;
 	(void)io;
 
