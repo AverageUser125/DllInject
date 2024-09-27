@@ -7,6 +7,7 @@
 #include <string>
 #include "coreDllInj.hpp"
 
+
 constexpr int screenHeight = 720;
 constexpr int screenWidth = 1280;
 void guiInit();

@@ -12,6 +12,7 @@
 #include <Psapi.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <map>
 // bassically an assert
 #define TRY(ptr) do { if (ptr == NULL) {  return EXIT_FAILURE; }} while (0)
 #define TRY_PRINT(ptr, msg) do { if (ptr == NULL) { std::cerr << msg; return EXIT_FAILURE; }} while (0)
@@ -21,8 +22,11 @@ struct ProcessInfo {
 	DWORD processId = 0;
 	std::wstring processName = L"";
 	std::wstring processPath = L"";
-	GLuint textureId = 0;
 };
+
+// proccess Id is not a valid key, since there can be the same program launched multiple times
+// the only way without the path is to make an int64 identifier which just is a counter
+extern std::map<std::wstring, GLuint> loadedIcons;
 
 std::string wstringToString(std::wstring wide);
 bool EnableDebugPrivilege();

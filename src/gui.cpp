@@ -100,9 +100,10 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 			// Move to the first column (icon)
 			ImGui::TableSetColumnIndex(0);
 
+			GLuint loadedIcon = loadedIcons.at(info.processPath); 
 			// Show the process icon if available
-			if (info.textureId != 0) {
-				ImGui::Image((void*)(intptr_t)info.textureId, ImVec2(iconSize, iconSize));
+			if (loadedIcon) {
+				ImGui::Image((void*)(intptr_t)loadedIcon, ImVec2(iconSize, iconSize));
 			}
 			// Move to the second column (process name)
 			ImGui::TableSetColumnIndex(1);
@@ -259,7 +260,7 @@ void guiCleanup() {
 
 	// TODO: have a seperate array just for texture so this doesn't need a loop and can just do
 	// glDeleteTexture(texArr.size(), texArr.data())
-	for (const auto& procInfo : sharedProcesses) {
-		glDeleteTextures(1, &procInfo.textureId);
+	for (const auto& procInfo : loadedIcons) {
+		glDeleteTextures(1, &procInfo.second);
 	}
 }

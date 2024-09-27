@@ -3,12 +3,12 @@
 #include <cctype> 
 #include <WinUser.h>
 #include <shellapi.h>
-#include <tchar.h>
 #include <algorithm>
 #include "gui.hpp"
-#include <cstring>
-#include <fstream>
 #include <map>
+
+
+std::map<std::wstring, GLuint> loadedIcons;
 
 std::string wstringToString(std::wstring wide) {
 	std::string str(wide.length(), 0);
@@ -150,13 +150,13 @@ GLuint LoadIconAsTexture(HICON hIcon);
 void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 	std::vector<HWND> windowHandles = getWindows();
 	std::vector<ProcessInfo> newProcesses;
-	newProcesses.reserve(windowHandles.size());
+	newProcesses.reserve(windowHandles.size() + 1);
 
 	constexpr DWORD TITLE_SIZE = 1024;
 	WCHAR windowTitle[TITLE_SIZE];
 
-	// Vector to track which cached processes were visited
-	std::vector<bool> visited(cachedProcesses.size(), false);
+
+	// Map to store loaded icons by process path (ensures icons are loaded once per program)
 
 	for (const auto& windowHandle : windowHandles) {
 		ProcessInfo info{};
@@ -165,8 +165,8 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 		GetWindowTextW(windowHandle, windowTitle, TITLE_SIZE);
 		info.processName = &windowTitle[0];
 
-		// Skip explorer.exe and irrelevant windows
-		if (info.processName.length() == 0 || info.processName == L"Program Manager" ||
+		// Skip irrelevant windows
+		if (info.processName.empty() || info.processName == L"Program Manager" ||
 			info.processName == L"Windows Input Experience") {
 			continue;
 		}
@@ -181,17 +181,14 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 							   [&](const ProcessInfo& p) { return p.processId == info.processId; });
 
 		if (it != cachedProcesses.end()) {
-			// Process is already cached, mark as visited
-			size_t index = std::distance(cachedProcesses.begin(), it);
-			visited[index] = true;
 			newProcesses.push_back(*it); // Reuse the existing process info
 			continue;
 		}
+
 		// Process is new, gather additional information
 
 		// Open process handle
-		HANDLE processHandle =
-			OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
+		HANDLE processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, info.processId);
 		if (processHandle != NULL) {
 			WCHAR filename[MAX_PATH]{};
 			if (GetModuleFileNameExW(processHandle, NULL, filename, MAX_PATH) == 0) {
@@ -202,28 +199,30 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 			CloseHandle(processHandle);
 		}
 
-		// Get window icon
-		HICON hIcon = (HICON)GetClassLongPtr(windowHandle, GCLP_HICON);
-		if (!hIcon || hIcon == LoadIcon(NULL, IDI_APPLICATION)) {
-			hIcon = ExtractIconW(0, info.processPath.c_str(), 0);
-		}
-		if (!hIcon) {
-			hIcon = LoadIconA(NULL, IDI_APPLICATION); // Fallback icon
-		}
-		info.textureId = LoadIconAsTexture(hIcon);
-		DestroyIcon(hIcon);
+		// Check if this process path has already loaded an icon
+		auto iconIt = loadedIcons.find(info.processPath);
+		if (iconIt != loadedIcons.end()) {
+			// Icon already loaded, reuse it
+			// info.textureId = iconIt->second;
+		} else {
+			// Get window icon
+			HICON hIcon = (HICON)GetClassLongPtr(windowHandle, GCLP_HICON);
+			if (!hIcon || hIcon == LoadIcon(NULL, IDI_APPLICATION)) {
+				hIcon = ExtractIconW(0, info.processPath.c_str(), 0);
+			}
+			if (!hIcon) {
+				hIcon = LoadIconA(NULL, IDI_APPLICATION); // Fallback icon
+			}
+			auto tempTexture = LoadIconAsTexture(hIcon);
+			// info.textureId = tempTexture;
+			DestroyIcon(hIcon);
 
-		// Add new process to the list
+			// Store the loaded icon for future reuse
+			loadedIcons[info.processPath] = tempTexture;
+		}
+
+		// Add the new process to the list (one entry per process)
 		newProcesses.push_back(info);
-	}
-
-
-	// Clean up resources of processes that were not visited (no longer running)
-	for (size_t i = 0; i < cachedProcesses.size(); ++i) {
-		if (!visited[i]) {
-			// Process no longer exists, free OpenGL resources or any other allocated resources
-			glDeleteTextures(1, &cachedProcesses[i].textureId);
-		}
 	}
 
 	// Replace old cached processes with the updated list
