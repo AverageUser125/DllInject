@@ -7,7 +7,6 @@
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
 #include "font.h"
-
 #include <chrono>
 
 static GLFWwindow* window = nullptr;
@@ -121,7 +120,12 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 			// Display the wrapped process name
 			std::string processDisplayName = processHebrewText(info.processName);
 			ImGui::PushTextWrapPos(ImGui::GetColumnWidth()); // Manually set the wrap width
+			
+			
+			ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]); // Assuming Fonts[1] is your bold font
 			ImGui::TextWrapped("%s", processDisplayName.c_str());
+			ImGui::PopFont();
+
 			ImGui::PopTextWrapPos();
 
 			// Move to the third column (process path)
@@ -217,13 +221,14 @@ void guiInit() {
 	
 	// io.Fonts->AddFontDefault();
 	ImFontConfig font_cfg;
-	font_cfg.MergeMode = false;
+	// font_cfg.MergeMode = true;
 	font_cfg.FontDataOwnedByAtlas = false;
 	// the 22 is the font size that I choose, 22 seems nice
-	ImFont* font = io.Fonts->AddFontFromMemoryTTF((void*)(NotoSansHebew_data), NotoSansHebew_size,
-												  22, &font_cfg, ranges.Data);
-	io.Fonts->Build();
-	
+	ImFont* font =
+		io.Fonts->AddFontFromMemoryTTF((void*)(NotoSansHebrew_data), NotoSansHebrew_size, 22, &font_cfg, ranges.Data);
+	if (font) {
+		io.Fonts->Build();
+	}
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
