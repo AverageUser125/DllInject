@@ -5,12 +5,7 @@
 #include <locale>
 #include <string>
 #include <codecvt>
-
-std::string wstringToString(std::wstring wstr) {
-	// Use codecvt to convert wstring to string (UTF-8)
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-	return converter.to_bytes(wstr);
-}
+#include "font.h"
 
 int main() {
 	EnableDebugPrivilege();
