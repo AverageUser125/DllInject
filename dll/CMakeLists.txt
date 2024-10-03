@@ -15,7 +15,7 @@ if(MSVC)
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-add_library(${DLL_NAME} SHARED dll.cpp dll.h)
+add_library(${DLL_NAME} SHARED "dllLinux.cpp" "dllWindows.cpp" dll.h)
 target_compile_definitions(${DLL_NAME} PRIVATE DLL_NAME="${DLL_NAME}")
 
 set_property(TARGET ${DLL_NAME} PROPERTY CXX_STANDARD 17)

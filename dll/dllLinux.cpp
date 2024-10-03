@@ -1,4 +1,7 @@
 #include "dll.h" 
+
+#ifdef __linux__
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -97,3 +100,4 @@ void preventDetach() {
 __attribute__((destructor)) void onUnload() {
 	preventDetach();
 }
+#endif
