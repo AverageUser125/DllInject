@@ -61,6 +61,13 @@ add_executable(${PROJECT_NAME} ${MY_SOURCES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
+# Set the output path for the executable to the bin directory
+set_target_properties(exeLocker PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_subdirectory(dll)
+
 if(MSVC)
     # Set linker flags for Windows subsystem and entry point
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
