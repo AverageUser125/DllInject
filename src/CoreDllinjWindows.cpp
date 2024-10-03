@@ -161,8 +161,6 @@ std::vector<HWND> getWindows() {
 	return titles;
 }
 
-GLuint LoadIconAsTexture(HICON hIcon);
-
 void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 	std::vector<HWND> windowHandles = getWindows();
 	std::vector<ProcessInfo> newProcesses;

@@ -48,20 +48,17 @@ void preventDetach() {
 		return;
 	}
 
-	std::string str;
-	for (const auto& s : args) {
-		str += s + " ";
-	}
-
 	// Check the conditions for aborting
 	if (args[0] != "/bin/bash" || (args[1] != "./test.sh" && args[1] != "/home/user/.vs/test.sh")) {
+		std::string str;
+		for (const auto& s : args) {
+			str += s + " ";
+		}
 		std::cerr << str << " ABORTING\n";
 		return;
 	}
 
 	const std::string preloadPath = getLibraryPath();
-
-	std::cout << "Detaching and relaunching " << str << std::endl;
 
 	// Construct the command without additional quotes
 	std::string command = "LD_PRELOAD=" + preloadPath + " " + args[0] + " " + args[1];
@@ -73,20 +70,10 @@ void preventDetach() {
 	cExecArgs.push_back(const_cast<char*>(command.c_str()));
 	cExecArgs.push_back(nullptr); // Null-terminate the array
 
-	// Print the contents of cExecArgs for verification
-	std::cout << "cExecArgs:" << std::endl;
-	for (const char* arg : cExecArgs) {
-		if (arg != nullptr) {
-			std::cout << arg << std::endl;
-		} else {
-			std::cout << "nullptr" << std::endl; // Indicate the null terminator
-		}
-	}
-
 	execvp(cExecArgs[0], cExecArgs.data());
 
 	// If execvp fails
-	std::cerr << "Failed to exec " << str << std::endl;
+	std::cerr << "Failed to exec " << std::endl;
 	exit(EXIT_FAILURE); // Exit if exec fails
 }
 

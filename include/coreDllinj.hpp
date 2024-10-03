@@ -11,12 +11,20 @@
 
 #include <unistd.h>
 
+#ifdef __linux__
 struct ProcessInfo {
 	pid_t processId = 0;
 	std::wstring processName = L"";
 	std::wstring processPath = L"";
-
+	std::wstring iconPath = L"";
 };
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+struct ProcessInfo {
+	pid_t processId = 0;
+	std::wstring processName = L"";
+	std::wstring processPath = L"";
+};
+#endif
 
 // proccess Id is not a valid key, since there can be the same program launched multiple times
 // the only way without the path is to make an int64 identifier which just is a counter

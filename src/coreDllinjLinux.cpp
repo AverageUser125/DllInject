@@ -12,6 +12,10 @@
 #include <locale>
 #include <string>
 #include <codecvt>
+#include <map>
+#include <glad/glad.h>
+
+std::map<std::wstring, GLuint> loadedIcons;
 
 bool EnableDebugPrivilege() {
 	// Check if the effective user ID is 0 (root)
@@ -92,23 +96,26 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 
 		// Read the command line to get process name and path
 		std::ifstream cmdlineFile(entry.path() / "cmdline");
-		if (cmdlineFile) {
-			std::string cmdline;
-			std::getline(cmdlineFile, cmdline);
-			if (!cmdline.empty()) {
-				size_t pos = cmdline.find('\0');
-				std::wstring name =
-					std::wstring(cmdline.begin(), cmdline.begin() + (pos != std::string::npos ? pos : cmdline.size()));
-
-				if (name == L"-bash") {
-					continue;
-				}
-				std::wstring path = std::wstring(cmdline.begin(), cmdline.end());
-
-				// Add the process information to the cachedProcesses vector
-				cachedProcesses.push_back({pid, name, path});
-			}
+		if (!cmdlineFile) {
+			continue;
 		}
+		std::string cmdline;
+		std::getline(cmdlineFile, cmdline);
+		if (cmdline.empty()) {
+			continue;
+		}
+		size_t pos = cmdline.find('\0');
+		std::wstring name =
+			std::wstring(cmdline.begin(), cmdline.begin() + (pos != std::string::npos ? pos : cmdline.size()));
+
+		if (name == L"-bash") {
+			continue;
+		}
+		std::wstring path = std::wstring(cmdline.begin(), cmdline.end());
+
+		// Add the process information to the cachedProcesses vector
+		cachedProcesses.push_back({pid, name, path});
+		
 	}
 }
 
