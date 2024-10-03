@@ -1,4 +1,5 @@
 #include "coreDllinj.hpp"
+#ifdef __linux__
 #include <unistd.h>
 #include <dlfcn.h>
 #include <limits.h>
@@ -8,8 +9,9 @@
 #include <fstream>
 #include <algorithm>
 #include <filesystem>
-#include <pwd.h>
-
+#include <locale>
+#include <string>
+#include <codecvt>
 
 bool EnableDebugPrivilege() {
 	// Check if the effective user ID is 0 (root)
@@ -34,6 +36,20 @@ void TerminateProcessEx(const ProcessInfo& info) {
 	} else {
 		perror("Failed to terminate process");
 	}
+}
+
+// Function to resolve a relative path on POSIX systems
+std::wstring resolveAbsolutePath(const std::string& relativePath) {
+	char absolutePath[PATH_MAX];
+
+	if (realpath(relativePath.c_str(), absolutePath) == nullptr) {
+		std::cerr << "Error resolving absolute path: " << relativePath << std::endl;
+		return L""; // Return empty string on failure
+	}
+
+	// Convert std::string to std::wstring
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	return converter.from_bytes(absolutePath); // Return the absolute path
 }
 
 // Function to check if the process is a user-space process
@@ -89,25 +105,8 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 				}
 				std::wstring path = std::wstring(cmdline.begin(), cmdline.end());
 
-				// Read UID from /proc/[pid]/status
-				std::ifstream statusFile(entry.path() / "status");
-				uid_t uid = 0;
-				if (statusFile) {
-					std::string line;
-					while (std::getline(statusFile, line)) {
-						if (line.find("Uid:") == 0) {
-							std::istringstream iss(line);
-							std::string ignore;	  // To skip the first element "Uid:"
-							iss >> ignore >> uid; // Read the UID
-							break;
-						}
-					}
-				}
-				struct passwd* pwd = getpwuid(uid);
-				std::wstring userName = pwd ? std::wstring(pwd->pw_name.begin(), pwd->pw_name.end()) : L"unknown";
-
 				// Add the process information to the cachedProcesses vector
-				cachedProcesses.push_back({pid, name, path, userName});
+				cachedProcesses.push_back({pid, name, path});
 			}
 		}
 	}
@@ -115,23 +114,11 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 
 
 
-int injectDll(const ProcessInfo& info, const std::string& dllPath) {
-	/*
-	std::cout << "hello world\n";
-	void* handle = dlopen(dllPath.c_str(), RTLD_LAZY);
-	if (!handle) {
-		std::cerr << "Error loading .so file: " << dlerror() << std::endl;
-		return 1;
-	}
+int injectDll(const ProcessInfo& info, const std::wstring& dllPath) {
 
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string dllPathStr = converter.to_bytes(dllPath);
 
-	// Unload the shared library
-	if (dlclose(handle) != 0) {
-		std::cerr << "Error unloading .so file: " << dlerror() << std::endl;
-		return 1;
-	}
-	*/
-	
     injector_t* injector = nullptr;
 
 	if (injector_attach(&injector, info.processId) != 0) {
@@ -139,10 +126,11 @@ int injectDll(const ProcessInfo& info, const std::string& dllPath) {
 		return -1;
 	}
 
-	if (injector_inject(injector, dllPath.c_str(), NULL) != 0) {
+	if (injector_inject(injector, dllPathStr.c_str(), NULL) != 0) {
 		printf("INJECT ERROR: %s\n", injector_error());
 	}
 
 	injector_detach(injector);
 	return 0;
 }
+#endif

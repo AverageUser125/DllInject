@@ -16,14 +16,7 @@ int main() {
 	//EnableDebugPrivilege();
 	static const char* relativePath = "./relaunchDll.so";
 
-	// Buffer to store the absolute path
-	char absolutePath[PATH_MAX];
-
-	// Convert relative path to absolute path
-	if (realpath(relativePath, absolutePath) == nullptr) {
-		std::cerr << "Error resolving absolute path: " << relativePath << std::endl;
-		return 1;
-	}
+	std::wstring absolutePath = resolveAbsolutePath(relativePath);
 	std::vector<ProcessInfo> start;
 	EnumerateRunningApplications(start);
 

@@ -15,7 +15,7 @@ struct ProcessInfo {
 	pid_t processId = 0;
 	std::wstring processName = L"";
 	std::wstring processPath = L"";
-	std::wstring userName = L""; // Added userName to store the owner of the process
+
 };
 
 // proccess Id is not a valid key, since there can be the same program launched multiple times
@@ -23,5 +23,5 @@ struct ProcessInfo {
 bool EnableDebugPrivilege();
 void TerminateProcessEx(const ProcessInfo& info);
 void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses);
-
-int injectDll(const ProcessInfo& info, const std::string& dllPath);
+std::wstring resolveAbsolutePath(const std::string& relativePath);
+int injectDll(const ProcessInfo& info, const std::wstring& dllPath);
