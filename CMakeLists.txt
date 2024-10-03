@@ -65,8 +65,11 @@ add_subdirectory(thirdparty/imgui)
 add_subdirectory(thirdparty/glfw)
 add_subdirectory(thirdparty/glad)
 add_subdirectory(thirdparty/injector)
+
+set(DLL_NAME "relaunchDll")
 add_subdirectory(dll)
 
+target_compile_definitions(exeLocker PRIVATE DLL_NAME="${DLL_NAME}")
 if(MSVC)
     # Set linker flags for Windows subsystem and entry point
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")

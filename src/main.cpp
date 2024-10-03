@@ -13,8 +13,23 @@ std::string wstringToString(std::wstring wstr) {
 }
 
 int main() {
-	//EnableDebugPrivilege();
-	static const char* relativePath = "./relaunchDll.so";
+	EnableDebugPrivilege();
+
+    #if !defined(NO_CONSOLE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
+	AllocConsole();
+	(void)freopen("conin$", "r", stdin);
+	(void)freopen("conout$", "w", stdout);
+	(void)freopen("conout$", "w", stderr);
+	std::cout.sync_with_stdio();
+	std::wcout.sync_with_stdio();
+
+	// Enable output of Unicode in the console
+	SetConsoleOutputCP(CP_UTF8);
+	std::wcout.imbue(std::locale("en_US.UTF-8"));
+	std::cout.imbue(std::locale("en_US.UTF-8"));
+    #endif 
+
+	static const char* relativePath = "./" DLL_NAME ".so";
 
 	std::wstring absolutePath = resolveAbsolutePath(relativePath);
 	std::vector<ProcessInfo> start;
