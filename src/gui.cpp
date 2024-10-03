@@ -104,11 +104,11 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 			// Move to the first column (icon)
 			ImGui::TableSetColumnIndex(0);
 
-			//GLuint loadedIcon = loadedIcons.at(info.processPath);
+			const auto& loadedIconIt = loadedIcons.find(info.processPath);
 			// Show the process icon if available
-			//if (loadedIcon) {
-			//	ImGui::Image((void*)(intptr_t)loadedIcon, ImVec2(iconSize, iconSize));
-			//}
+			if (loadedIconIt != loadedIcons.end()) {
+				ImGui::Image((void*)(intptr_t)(loadedIconIt->second), ImVec2(iconSize, iconSize));
+			}
 			// Move to the second column (process name)
 			ImGui::TableSetColumnIndex(1);
 			// Instead of wrapping the selectable itself, wrap the text inside the selectable
