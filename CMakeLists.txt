@@ -78,7 +78,13 @@ endif()
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui injector_static)
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui injector_static)
+else()
+    add_subdirectory(thirdparty/stb_image)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui stb_image injector_static)
+endif()
+
 
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

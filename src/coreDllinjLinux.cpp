@@ -14,7 +14,7 @@
 #include <codecvt>
 #include <map>
 #include <glad/glad.h>
-
+#include <stb_image.h>
 std::map<std::wstring, GLuint> loadedIcons;
 
 bool EnableDebugPrivilege() {
@@ -78,6 +78,48 @@ bool IsUserSpaceProcess(pid_t pid) {
 	return false;
 }
 
+// Function to load an image and create an OpenGL texture
+GLuint LoadTextureFromFile(const std::string& filename) {
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, channels;
+	unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
+
+	if (data) {
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, (channels == 4 ? GL_RGBA : GL_RGB), width, height, 0,
+					 (channels == 4 ? GL_RGBA : GL_RGB), GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(data);
+	} else {
+		std::cerr << "Failed to load texture: " << filename << std::endl;
+		return 0; // Return 0 if texture loading failed
+	}
+
+	return textureID;
+}
+
+std::wstring GetIconPathForProcess(const std::wstring& processName) {
+	std::string desktopFilePath;
+	for (const auto& entry : std::filesystem::directory_iterator("/usr/share/applications")) {
+		if (entry.path().filename() == (processName + L".desktop")) {
+			desktopFilePath = entry.path().string();
+			break;
+		}
+	}
+
+	std::ifstream desktopFile(desktopFilePath);
+	std::string line;
+	while (std::getline(desktopFile, line)) {
+		if (line.find("Icon=") != std::string::npos) {
+			return std::wstring(line.substr(5).begin(), line.substr(5).end()); // Extract icon path
+		}
+	}
+
+	return L""; // Return empty if no icon is found
+}
+
 void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 	cachedProcesses.clear();
 
@@ -113,9 +155,27 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 		}
 		std::wstring path = std::wstring(cmdline.begin(), cmdline.end());
 
+		// Get the icon path for the process
+		std::wstring iconPath = GetIconPathForProcess(name);
+
+		// Check if the icon is already loaded
+		auto it = loadedIcons.find(name);
+		GLuint textureID;
+
+		if (it != loadedIcons.end()) {
+			// Icon is already loaded, reuse existing texture
+			textureID = it->second;
+		} else {
+			// Load the texture and store it in the map
+			std::string iconPathStr(iconPath.begin(), iconPath.end()); // Convert to std::string
+			textureID = LoadTextureFromFile(iconPathStr);
+			if (textureID != 0) {
+				loadedIcons[name] = textureID; // Store the texture ID in the map
+			}
+		}
+
 		// Add the process information to the cachedProcesses vector
 		cachedProcesses.push_back({pid, name, path});
-		
 	}
 }
 
