@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <glad/glad.h>
 // bassically an assert
 #define TRY(ptr) do { if (ptr == NULL) {  return EXIT_FAILURE; }} while (0)
 #define TRY_PRINT(ptr, msg) do { if (ptr == NULL) { std::cerr << msg; return EXIT_FAILURE; }} while (0)
@@ -25,6 +27,7 @@ struct ProcessInfo {
 	std::wstring processPath = L"";
 };
 #endif
+extern std::map<std::wstring, GLuint> loadedIcons;
 
 // proccess Id is not a valid key, since there can be the same program launched multiple times
 // the only way without the path is to make an int64 identifier which just is a counter

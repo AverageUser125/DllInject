@@ -1,4 +1,6 @@
-﻿﻿#pragma once
+﻿#ifndef  NOTOSANSHEBREW_H_
+#define NOTOSANSHEBREW_H_
+
 // Exported using binary_to_compressed_c.cpp
 constexpr unsigned int NotoSansHebrew_size = 41692;
 constexpr unsigned int NotoSansHebrew_data[41692 / 4] = {
@@ -1162,3 +1164,4 @@ constexpr unsigned int NotoSansHebrew_data[41692 / 4] = {
 	0x11004002, 0x0000f001, 0x2300db01, 0x2300db01, 0x2300db01, 0x2300db01, 0x34004002, 0xb800e901, 0xb700e901,
 	0x28007501,
 };
+#endif // ! NOTOSANSHEBREW_H_

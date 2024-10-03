@@ -13,8 +13,8 @@
 #include <string>
 #include <codecvt>
 #include <map>
-#include <glad/glad.h>
 #include <stb_image.h>
+
 std::map<std::wstring, GLuint> loadedIcons;
 
 bool EnableDebugPrivilege() {
@@ -80,6 +80,7 @@ bool IsUserSpaceProcess(pid_t pid) {
 
 // Function to load an image and create an OpenGL texture
 GLuint LoadTextureFromFile(const std::string& filename) {
+	return 0;
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 

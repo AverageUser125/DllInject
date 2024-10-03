@@ -6,6 +6,7 @@
 #include <string>
 #include <codecvt>
 #include "font.h"
+#include "gui.hpp"
 
 int main() {
 	EnableDebugPrivilege();
@@ -27,23 +28,8 @@ int main() {
 	static const char* relativePath = "./" DLL_NAME ".so";
 
 	std::wstring absolutePath = resolveAbsolutePath(relativePath);
-	std::vector<ProcessInfo> start;
-	EnumerateRunningApplications(start);
 
-	for (const auto& info : start) {
-		std::cout << "PID: " << info.processId 
-			<< ", NAME: " << wstringToString(info.processName)
-			<< ", PATH: " << wstringToString(info.processPath)
-			<< '\n'; 
-	
-	}
-
-	ProcessInfo info;
-	std::cout << "enter ID: ";
-	std::cin >> info.processId;
-
-	injectDll(info, absolutePath);
-
+	guiLoop(absolutePath);
 
 	return EXIT_SUCCESS;
 }
