@@ -17,6 +17,13 @@ if(POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW)
 endif()
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_WAYLAND TRUE CACHE BOOL "" FORCE)
+
 # /Zi and /GL are incompatible, so here
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
@@ -53,9 +60,12 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 set_target_properties(exeLocker PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+add_subdirectory(thirdparty/imgui)
+add_subdirectory(thirdparty/glfw)
 add_subdirectory(thirdparty/glad)
-add_subdirectory(dll)
 add_subdirectory(thirdparty/injector)
+add_subdirectory(dll)
 
 if(MSVC)
     # Set linker flags for Windows subsystem and entry point
@@ -65,7 +75,7 @@ endif()
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glad injector_static)
+target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui injector_static)
 
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
