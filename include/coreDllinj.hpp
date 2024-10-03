@@ -11,9 +11,9 @@
 #define TRY_PRINT_DO(ptr, msg, func) do { if (ptr == NULL) { std::cerr << msg; func; return EXIT_FAILURE; }} while (0)
 
 
-#include <unistd.h>
 
 #ifdef __linux__
+#include <unistd.h>
 struct ProcessInfo {
 	pid_t processId = 0;
 	std::wstring processName = L"";
@@ -21,8 +21,11 @@ struct ProcessInfo {
 	std::wstring iconPath = L"";
 };
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
 struct ProcessInfo {
-	pid_t processId = 0;
+	DWORD processId = 0;
 	std::wstring processName = L"";
 	std::wstring processPath = L"";
 };

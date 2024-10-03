@@ -18,5 +18,6 @@ void guiLoop(const std::wstring& absoluteDllPath);
 void guiCleanup();
 
 #ifndef __linux__
+#include <wtypes.h>
 GLuint LoadIconAsTexture(HICON hIcon);
 #endif //

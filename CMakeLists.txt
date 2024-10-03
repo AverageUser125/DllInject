@@ -43,7 +43,7 @@ if(MSVC)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
     # Show all warnings, just nice to have
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete")
 endif()
 
 project("${PROJECT_NAME}")
@@ -64,7 +64,6 @@ set_target_properties(exeLocker PROPERTIES
 add_subdirectory(thirdparty/imgui)
 add_subdirectory(thirdparty/glfw)
 add_subdirectory(thirdparty/glad)
-add_subdirectory(thirdparty/injector)
 
 set(DLL_NAME "relaunchDll")
 add_subdirectory(dll)
@@ -79,8 +78,9 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 if (WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui injector_static)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui)
 else()
+    add_subdirectory(thirdparty/injector)
     add_subdirectory(thirdparty/stb_image)
     target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui stb_image injector_static)
 endif()

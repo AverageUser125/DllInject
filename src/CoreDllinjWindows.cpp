@@ -1,12 +1,17 @@
 #include "coreDllinj.hpp"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
 #include <cctype>
 #include <WinUser.h>
 #include <shellapi.h>
 #include <algorithm>
 #include "gui.hpp"
+#include <Psapi.h>
 #include <map>
+#include <codecvt>
 std::map<std::wstring, GLuint> loadedIcons;
 
 std::string ErrorToString(DWORD errorMessageID) {
