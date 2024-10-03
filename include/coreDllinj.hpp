@@ -15,6 +15,7 @@ struct ProcessInfo {
 	pid_t processId = 0;
 	std::wstring processName = L"";
 	std::wstring processPath = L"";
+	std::wstring userName = L""; // Added userName to store the owner of the process
 };
 
 // proccess Id is not a valid key, since there can be the same program launched multiple times
