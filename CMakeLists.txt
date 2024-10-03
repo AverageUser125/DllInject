@@ -67,6 +67,7 @@ set_target_properties(exeLocker PROPERTIES
 )
 
 add_subdirectory(dll)
+add_subdirectory(thirdparty/injector)
 
 if(MSVC)
     # Set linker flags for Windows subsystem and entry point
@@ -86,6 +87,8 @@ endif()
 
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
+target_link_libraries(${PROJECT_NAME} PRIVATE injector_static)
 
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

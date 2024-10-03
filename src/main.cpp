@@ -1,8 +1,7 @@
 #include "coreDllinj.hpp"
 #include <cstdio>
-#include <unistd.h>
-#include <dlfcn.h>
 #include <limits.h>
+#include <iostream>
 
 int main() {
 	//EnableDebugPrivilege();
@@ -17,21 +16,13 @@ int main() {
 		return 1;
 	}
 
-	std::cout << "hello world\n";
-	void* handle = dlopen(absolutePath, RTLD_LAZY);
-	if (!handle) {
-		std::cerr << "Error loading .so file: " << dlerror() << std::endl;
-		return 1;
-	}
 
+	ProcessInfo info;
+	std::cout << "enter ID: ";
+	std::cin >> info.processId;
 
-	// Unload the shared library
-	if (dlclose(handle) != 0) {
-		std::cerr << "Error unloading .so file: " << dlerror() << std::endl;
-		return 1;
-	}
-	// DWORD processId = GetProcessIDByWindow("Untitled - Notepad");
-	// TRY(processId);
+	injectDll(info, absolutePath);
+
 
 	return EXIT_SUCCESS;
 }

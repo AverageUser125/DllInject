@@ -4,6 +4,9 @@ set(DLL_NAME "relaunchDll")
 
 project(${DLL_NAME})
 
+# Ensure position-independent code
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 if(MSVC)
 	# Set MSVC runtime library
 	add_compile_options(/arch:AVX2) #make sure SIMD optimizations take place

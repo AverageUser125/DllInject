@@ -13,5 +13,4 @@ target_sources(imgui PRIVATE
 
 target_include_directories(imgui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/imgui" "${CMAKE_CURRENT_SOURCE_DIR}/imgui/misc/cpp/")
 
-
 target_link_libraries(imgui PUBLIC glfw glad)
