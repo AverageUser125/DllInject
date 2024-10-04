@@ -4,6 +4,7 @@
 #include <vector>
 #include <codecvt>
 #include <locale>
+#include <algorithm>
 
 std::string wstringToString(std::wstring wstr) {
 	// Use codecvt to convert wstring to string (UTF-8)

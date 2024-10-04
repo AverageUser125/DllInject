@@ -1,20 +1,33 @@
 #include "dll.h"
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include <string>
 
-#define TRY_AND_DO(ptr, func) do { if (ptr == NULL) {func;  return; }} while (0)
-#define TRY(ptr) do { if (ptr == NULL) { return; }} while (0)
+#define TRY_AND_DO(ptr, func)                                                                                          \
+	do {                                                                                                               \
+		if (ptr == NULL) {                                                                                             \
+			func;                                                                                                      \
+			return;                                                                                                    \
+		}                                                                                                              \
+	} while (0)
+#define TRY(ptr)                                                                                                       \
+	do {                                                                                                               \
+		if (ptr == NULL) {                                                                                             \
+			return;                                                                                                    \
+		}                                                                                                              \
+	} while (0)
 
 
 #define TO_WIDE_STRING(s) L##s
 #define WIDE_STRINGIZE(x) TO_WIDE_STRING(#x)
 
 std::wstring GetDllPath() {
-	HMODULE hModule = GetModuleHandleW(TO_WIDE_STRING("" DLL_NAME "" ".dll")); // Get the handle of the current module
+	HMODULE hModule = GetModuleHandleW(TO_WIDE_STRING("" DLL_NAME ""
+													  ".dll")); // Get the handle of the current module
 	if (hModule) {
 		WCHAR path[MAX_PATH];
 		if (GetModuleFileNameW(hModule, path, MAX_PATH)) {
@@ -33,7 +46,8 @@ void injectDll(HANDLE hProcess, const std::wstring& dllPath) {
 	const auto freeMem = [hProcess, dllPathAddress]() { VirtualFreeEx(hProcess, dllPathAddress, 0, MEM_RELEASE); };
 
 	TRY_AND_DO(
-		WriteProcessMemory(hProcess, dllPathAddress, dllPath.data(), (dllPath.size() + 1) * sizeof(wchar_t), NULL), freeMem());
+		WriteProcessMemory(hProcess, dllPathAddress, dllPath.data(), (dllPath.size() + 1) * sizeof(wchar_t), NULL),
+		freeMem());
 
 	// Get the address of the LoadLibraryA function in the kernel32.dll module
 	HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
@@ -104,3 +118,4 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved) {
 
 	return TRUE;
 }
+#endif //  _WIN32

@@ -1,12 +1,17 @@
 #include "coreDllinj.hpp"
-#include "gui.hpp"
 #include <cstdio>
-
-#define NO_CONSOLE
+#include <limits.h>
+#include <iostream>
+#include <locale>
+#include <string>
+#include <codecvt>
+#include "font.h"
+#include "gui.hpp"
 
 int main() {
 	EnableDebugPrivilege();
-	#ifndef NO_CONSOLE
+
+    #if !defined(NO_CONSOLE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
 	AllocConsole();
 	(void)freopen("conin$", "r", stdin);
 	(void)freopen("conout$", "w", stdout);
@@ -20,13 +25,12 @@ int main() {
 	std::cout.imbue(std::locale("en_US.UTF-8"));
     #endif 
 
-	// convert to absolute path
-	WCHAR absoluteDllPath[MAX_PATH]{};
-	GetFullPathNameW(L"./" DLL_NAME ".dll", MAX_PATH, absoluteDllPath, nullptr);
+	static const char* relativePath = "./" DLL_NAME "." DLL_EXTENSION;
 
-	guiLoop(absoluteDllPath);
-	// DWORD processId = GetProcessIDByWindow("Untitled - Notepad");
-	// TRY(processId);
+	std::wstring absolutePath = resolveAbsolutePath(relativePath);
+	std::wcout << absolutePath;
+
+	guiLoop(absolutePath);
 
 	return EXIT_SUCCESS;
 }

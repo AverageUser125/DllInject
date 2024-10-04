@@ -7,52 +7,15 @@
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
 #include "font.h"
+#include "extractIcon.hpp"
 #include <chrono>
-
+#include "coreDllinj.hpp"
 static GLFWwindow* window = nullptr;
 static std::vector<ProcessInfo> sharedProcesses;
 
 void refreshOptions() {
 	EnumerateRunningApplications(sharedProcesses);
 }
-
-GLuint LoadIconAsTexture(HICON hIcon) {
-	// Get the icon's dimensions
-	ICONINFO iconInfo;
-	GetIconInfo(hIcon, &iconInfo);
-
-	// Create a device context and a bitmap
-	HDC hdc = GetDC(NULL);
-	HBITMAP hBitmap = iconInfo.hbmColor; // Use the color bitmap
-	BITMAP bmp{};
-	GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-	// Create an OpenGL texture
-	GLuint textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-
-	// Set texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// Convert the bitmap to a texture
-	std::vector<BYTE> data(bmp.bmWidthBytes * bmp.bmHeight);
-	GetBitmapBits(hBitmap, data.size(), data.data());
-
-	// Upload the texture to OpenGL
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bmp.bmWidth, bmp.bmHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, data.data());
-
-	// Clean up
-	DeleteObject(iconInfo.hbmColor);
-	DeleteObject(iconInfo.hbmMask);
-	ReleaseDC(NULL, hdc);
-
-	return textureID;
-}
-
 void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstring& absoluteDllPath) {
 	static int selectedProcess = -1;
 	assert(processes.size() != 0);
@@ -66,7 +29,8 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 
 	// Begin the ImGui window with these dimensions
 	ImGui::Begin("Running Applications", nullptr,
-				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
+					 ImGuiWindowFlags_NoTitleBar);
 
 	// Adjust the size of icons and text dynamically based on window size
 	float iconSize = std::max(width * 0.03f, 0.01f); // Set icon size relative to window height
@@ -103,10 +67,10 @@ void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstrin
 			// Move to the first column (icon)
 			ImGui::TableSetColumnIndex(0);
 
-			GLuint loadedIcon = loadedIcons.at(info.processPath); 
+			const auto& loadedIconIt = loadedIcons.find(info.processPath);
 			// Show the process icon if available
-			if (loadedIcon) {
-				ImGui::Image((void*)(intptr_t)loadedIcon, ImVec2(iconSize, iconSize));
+			if (loadedIconIt != loadedIcons.end()) {
+				ImGui::Image((void*)(intptr_t)(loadedIconIt->second), ImVec2(iconSize, iconSize));
 			}
 			// Move to the second column (process name)
 			ImGui::TableSetColumnIndex(1);
@@ -200,12 +164,12 @@ void guiInit() {
 #ifndef NDEBUG
 	enableReportGlErrors();
 #endif
-	
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); 
+	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiWindowFlags_NoResize;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 	io.IniFilename = NULL;
 	(void)io;
 
@@ -214,7 +178,7 @@ void guiInit() {
 	ImFontGlyphRangesBuilder builder;
 	builder.AddRanges(io.Fonts->GetGlyphRangesHebrew()); // Add one of the default ranges
 	builder.BuildRanges(&ranges); // Build the final result (ordered ranges with all the unique characters submitted)
-	
+
 	// io.Fonts->AddFontDefault();
 	ImFontConfig font_cfg;
 	// font_cfg.MergeMode = true;
@@ -228,7 +192,7 @@ void guiInit() {
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
-	
+
 	imguiThemes::embraceTheDarkness();
 	// Set the window icon
 
@@ -245,7 +209,7 @@ void guiLoop(const std::wstring& absoluteDllPath) {
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-		
+
 		// Check if REFRESH_TIME seconds have passed
 		auto currentTime = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsedTime = currentTime - lastRefreshTime;

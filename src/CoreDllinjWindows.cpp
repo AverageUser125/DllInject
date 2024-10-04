@@ -1,13 +1,18 @@
 #include "coreDllinj.hpp"
-// #include <Windows.h>
-#include <cctype> 
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#include <cctype>
 #include <WinUser.h>
 #include <shellapi.h>
 #include <algorithm>
 #include "gui.hpp"
+#include <Psapi.h>
 #include <map>
-
-std::map<std::wstring, GLuint> loadedIcons;
+#include <codecvt>
+#include "extractIcon.hpp"
 
 std::string ErrorToString(DWORD errorMessageID) {
 
@@ -27,6 +32,7 @@ std::string ErrorToString(DWORD errorMessageID) {
 
 	return message;
 }
+
 std::string GetLastErrorAsString() {
 	//Get the error message ID, if any.
 	DWORD errorMessageID = GetLastError();
@@ -35,6 +41,23 @@ std::string GetLastErrorAsString() {
 	}
 	return ErrorToString(errorMessageID);
 }
+
+// Function to resolve a DLL path on Windows
+std::wstring resolveAbsolutePath(const std::string& relativePath) {
+	WCHAR absoluteDllPath[MAX_PATH]{};
+
+	// Convert std::string to std::wstring
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::wstring wRelativePath = converter.from_bytes(relativePath);
+
+	if (GetFullPathNameW(wRelativePath.c_str(), MAX_PATH, absoluteDllPath, nullptr) == 0) {
+		std::wcerr << L"Error resolving absolute path: " << wRelativePath << std::endl;
+		return L""; // Return empty string on failure
+	}
+
+	return absoluteDllPath; // Return the absolute path
+}
+
 bool EnableDebugPrivilege() {
 	HANDLE hToken;
 	LUID luid;
@@ -74,6 +97,7 @@ bool EnableDebugPrivilege() {
 
 	return 1;
 }
+
 DWORD GetProcessIDByWindow(const std::wstring& name) {
 	HWND windowHandle = FindWindowW(NULL, name.c_str());
 	if (windowHandle == NULL) {
@@ -81,7 +105,7 @@ DWORD GetProcessIDByWindow(const std::wstring& name) {
 		return NULL;
 	}
 	DWORD processId = NULL;
-    DWORD retValue = GetWindowThreadProcessId(windowHandle, &processId);
+	DWORD retValue = GetWindowThreadProcessId(windowHandle, &processId);
 	if (retValue == NULL || processId == NULL) {
 		std::cout << GetLastErrorAsString();
 		return NULL;
@@ -89,16 +113,17 @@ DWORD GetProcessIDByWindow(const std::wstring& name) {
 	return processId;
 }
 
-int injectDll(const ProcessInfo& info, const std::wstring& dllPath){
+int injectDll(const ProcessInfo& info, const std::wstring& dllPath) {
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, info.processId);
 	TRY_PRINT(hProcess, "Can't open process");
 
 	LPVOID dllPathAddress = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	TRY_PRINT(dllPathAddress, "Failed to allocate memory in target process");
 
-	const auto freeMem = [hProcess, dllPathAddress]() { VirtualFreeEx(hProcess, dllPathAddress, 0, MEM_RELEASE); };	
+	const auto freeMem = [hProcess, dllPathAddress]() { VirtualFreeEx(hProcess, dllPathAddress, 0, MEM_RELEASE); };
 
-	TRY_PRINT_DO(WriteProcessMemory(hProcess, dllPathAddress, dllPath.data(), (dllPath.size() + 1) * sizeof(wchar_t), NULL),
+	TRY_PRINT_DO(
+		WriteProcessMemory(hProcess, dllPathAddress, dllPath.data(), (dllPath.size() + 1) * sizeof(wchar_t), NULL),
 		"failed to write to process memory dll path", freeMem());
 
 	// Get the address of the LoadLibraryA function in the kernel32.dll module
@@ -121,6 +146,7 @@ int injectDll(const ProcessInfo& info, const std::wstring& dllPath){
 
 	return EXIT_SUCCESS;
 }
+
 BOOL CALLBACK speichereFenster(HWND hwnd, LPARAM lParam) {
 	if (!IsWindowVisible(hwnd)) {
 		return TRUE;
@@ -133,12 +159,12 @@ BOOL CALLBACK speichereFenster(HWND hwnd, LPARAM lParam) {
 
 	return TRUE;
 }
+
 std::vector<HWND> getWindows() {
 	std::vector<HWND> titles;
 	EnumWindows(speichereFenster, reinterpret_cast<LPARAM>(&titles));
 	return titles;
 }
-GLuint LoadIconAsTexture(HICON hIcon);
 
 void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 	std::vector<HWND> windowHandles = getWindows();
@@ -198,20 +224,7 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 			// Icon already loaded, reuse it
 			// info.textureId = iconIt->second;
 		} else {
-			// Get window icon
-			HICON hIcon = (HICON)GetClassLongPtr(windowHandle, GCLP_HICON);
-			if (!hIcon || hIcon == LoadIcon(NULL, IDI_APPLICATION)) {
-				hIcon = ExtractIconW(0, info.processPath.c_str(), 0);
-			}
-			if (!hIcon) {
-				hIcon = LoadIconA(NULL, IDI_APPLICATION); // Fallback icon
-			}
-			auto tempTexture = LoadIconAsTexture(hIcon);
-			// info.textureId = tempTexture;
-			DestroyIcon(hIcon);
-
-			// Store the loaded icon for future reuse
-			loadedIcons[info.processPath] = tempTexture;
+			getIcon(info, windowHandle);
 		}
 
 		// Add the new process to the list (one entry per process)
@@ -234,3 +247,5 @@ void TerminateProcessEx(const ProcessInfo& info) {
 
 	CloseHandle(hProcess);
 }
+
+#endif
