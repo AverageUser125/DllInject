@@ -18,7 +18,6 @@ struct ProcessInfo {
 	pid_t processId = 0;
 	std::wstring processName = L"";
 	std::wstring processPath = L"";
-	std::wstring iconPath = L"";
 };
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #define WIN32_LEAN_AND_MEAN
@@ -30,7 +29,6 @@ struct ProcessInfo {
 	std::wstring processPath = L"";
 };
 #endif
-extern std::map<std::wstring, GLuint> loadedIcons;
 
 // proccess Id is not a valid key, since there can be the same program launched multiple times
 // the only way without the path is to make an int64 identifier which just is a counter

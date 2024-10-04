@@ -7,6 +7,7 @@
 #include <glad/errorReporting.hpp>
 #include <imguiThemes.h>
 #include "font.h"
+#include "extractIcon.hpp"
 #include <chrono>
 #include "coreDllinj.hpp"
 static GLFWwindow* window = nullptr;

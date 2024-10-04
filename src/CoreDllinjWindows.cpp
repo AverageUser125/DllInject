@@ -12,10 +12,7 @@
 #include <Psapi.h>
 #include <map>
 #include <codecvt>
-
-
-std::map<std::wstring, GLuint> loadedIcons;
-GLuint LoadIconAsTexture(HICON hIcon);
+#include "extractIcon.hpp"
 
 std::string ErrorToString(DWORD errorMessageID) {
 
@@ -227,20 +224,7 @@ void EnumerateRunningApplications(std::vector<ProcessInfo>& cachedProcesses) {
 			// Icon already loaded, reuse it
 			// info.textureId = iconIt->second;
 		} else {
-			// Get window icon
-			HICON hIcon = (HICON)GetClassLongPtr(windowHandle, GCLP_HICON);
-			if (!hIcon || hIcon == LoadIcon(NULL, IDI_APPLICATION)) {
-				hIcon = ExtractIconW(0, info.processPath.c_str(), 0);
-			}
-			if (!hIcon) {
-				hIcon = LoadIconA(NULL, IDI_APPLICATION); // Fallback icon
-			}
-			auto tempTexture = LoadIconAsTexture(hIcon);
-			// info.textureId = tempTexture;
-			DestroyIcon(hIcon);
-
-			// Store the loaded icon for future reuse
-			loadedIcons[info.processPath] = tempTexture;
+			getIcon(info, windowHandle);
 		}
 
 		// Add the new process to the list (one entry per process)
@@ -264,40 +248,4 @@ void TerminateProcessEx(const ProcessInfo& info) {
 	CloseHandle(hProcess);
 }
 
-GLuint LoadIconAsTexture(HICON hIcon) {
-	// Get the icon's dimensions
-	ICONINFO iconInfo;
-	GetIconInfo(hIcon, &iconInfo);
-
-	// Create a device context and a bitmap
-	HDC hdc = GetDC(NULL);
-	HBITMAP hBitmap = iconInfo.hbmColor; // Use the color bitmap
-	BITMAP bmp{};
-	GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-	// Create an OpenGL texture
-	GLuint textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-
-	// Set texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// Convert the bitmap to a texture
-	std::vector<BYTE> data(bmp.bmWidthBytes * bmp.bmHeight);
-	GetBitmapBits(hBitmap, data.size(), data.data());
-
-	// Upload the texture to OpenGL
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bmp.bmWidth, bmp.bmHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, data.data());
-
-	// Clean up
-	DeleteObject(iconInfo.hbmColor);
-	DeleteObject(iconInfo.hbmMask);
-	ReleaseDC(NULL, hdc);
-
-	return textureID;
-}
 #endif
