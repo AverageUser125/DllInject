@@ -3,6 +3,11 @@
 #include <stb_image.h>
 #include <fstream>
 #include "extractIcon.hpp"
+
+std::map<std::wstring, GLuint> loadedIcons;
+
+static const std::string path2 = std::string(std::getenv("HOME")) + "/.local/share/applications/";
+
 // Function to load image and create OpenGL texture
 GLuint loadTexture(const std::string& imagePath) {
 	int width, height, channels;
@@ -35,8 +40,7 @@ GLuint loadTexture(const std::string& imagePath) {
 // Function to get icon from .desktop files (simplified for demonstration)
 std::string findDesktopFileIcon(const std::wstring& processName) {
 	// Define the paths to search for .desktop files
-	const std::vector<std::string> searchPaths = {"/usr/share/applications/",
-												  std::string(std::getenv("HOME")) + "/.local/share/applications/"};
+	const std::vector<std::string> searchPaths = {"/usr/share/applications/", path2};
 
 	// Convert processName from std::wstring to std::string
 	std::string processNameStr(processName.begin(), processName.end());
@@ -84,8 +88,8 @@ void getIcon(const ProcessInfo& processInfo, void* handle) {
 	std::string iconPath = findDesktopFileIcon(processInfo.processName);
 
 	if (iconPath.empty()) {
-		std::cerr << "Icon not found for process: "
-				  << std::string(processInfo.processName.begin(), processInfo.processName.end()) << std::endl;
+		//std::cerr << "Icon not found for process: "
+		//		  << std::string(processInfo.processName.begin(), processInfo.processName.end()) << std::endl;
 		return;
 	}
 

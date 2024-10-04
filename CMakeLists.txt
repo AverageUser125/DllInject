@@ -43,8 +43,10 @@ if(MSVC)
     add_compile_options(/arch:AVX2)
 
 else()
+if(NOT WIN32)
     # Show all warnings, just nice to have
-    # add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete)
+    add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete -Wno-missing-field-initializers)
+endif()
 endif()
 
 project("${PROJECT_NAME}")

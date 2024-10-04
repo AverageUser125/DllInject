@@ -14,7 +14,6 @@
 #include <codecvt>
 #include <map>
 #include "extractIcon.hpp"
-std::map<std::wstring, GLuint> loadedIcons;
 
 bool EnableDebugPrivilege() {
 	// Check if the effective user ID is 0 (root)
