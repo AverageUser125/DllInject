@@ -37,6 +37,23 @@ GLuint loadTexture(const std::string& imagePath) {
 	return texture;
 }
 
+GLuint createTextureFromIconData(unsigned char* data, int width, int height) {
+	GLuint textureId;
+	glGenTextures(1, &textureId);
+	glBindTexture(GL_TEXTURE_2D, textureId);
+
+	// Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Load the texture data
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	return textureId;
+}
+
 // Function to get icon from .desktop files (simplified for demonstration)
 std::string findDesktopFileIcon(const std::wstring& processName) {
 	// Define the paths to search for .desktop files
@@ -86,21 +103,16 @@ void getIcon(const ProcessInfo& processInfo, void* handle) {
 
 	// Search for the icon in .desktop files
 	std::string iconPath = findDesktopFileIcon(processInfo.processName);
-
-	if (iconPath.empty()) {
-		//std::cerr << "Icon not found for process: "
-		//		  << std::string(processInfo.processName.begin(), processInfo.processName.end()) << std::endl;
-		return;
+	if (!iconPath.empty()) {
+		// Load the icon as an OpenGL texture
+		GLuint texture = loadTexture(iconPath);
+		if (texture != 0) {
+			loadedIcons[processInfo.processPath] = texture;
+			return;
+		}
 	}
 
-	// Load the icon as an OpenGL texture
-	GLuint texture = loadTexture(iconPath);
-	if (texture != 0) {
-		loadedIcons[processInfo.processPath] = texture;
-		std::wcout << L"Icon loaded for process: " << processInfo.processPath << std::endl;
-	} else {
-		std::cerr << "Failed to load texture for icon: " << iconPath << std::endl;
-	}
+	// complete failure, no fallback icon
 }
 
 #endif
