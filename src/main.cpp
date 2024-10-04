@@ -25,9 +25,10 @@ int main() {
 	std::cout.imbue(std::locale("en_US.UTF-8"));
     #endif 
 
-	static const char* relativePath = "./" DLL_NAME ".so";
+	static const char* relativePath = "./" DLL_NAME "." DLL_EXTENSION;
 
 	std::wstring absolutePath = resolveAbsolutePath(relativePath);
+	std::wcout << absolutePath;
 
 	guiLoop(absolutePath);
 

@@ -12,6 +12,8 @@
 #include <Psapi.h>
 #include <map>
 #include <codecvt>
+
+
 std::map<std::wstring, GLuint> loadedIcons;
 GLuint LoadIconAsTexture(HICON hIcon);
 
