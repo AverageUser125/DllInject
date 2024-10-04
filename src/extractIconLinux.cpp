@@ -34,12 +34,20 @@ GLuint loadTexture(const std::string& imagePath) {
 
 // Function to get icon from .desktop files (simplified for demonstration)
 std::string findDesktopFileIcon(const std::wstring& processName) {
+	// Define the paths to search for .desktop files
 	const std::vector<std::string> searchPaths = {"/usr/share/applications/",
 												  std::string(std::getenv("HOME")) + "/.local/share/applications/"};
 
-	std::string processNameStr(processName.begin(), processName.end()); // Convert to std::string
+	// Convert processName from std::wstring to std::string
+	std::string processNameStr(processName.begin(), processName.end());
 
 	for (const auto& path : searchPaths) {
+		// Check if the directory exists
+		if (!std::filesystem::exists(path)) {
+			continue;
+		}
+
+		// Iterate through .desktop files in the directory
 		for (const auto& entry : std::filesystem::directory_iterator(path)) {
 			if (entry.path().extension() == ".desktop") {
 				std::ifstream file(entry.path());
@@ -56,10 +64,11 @@ std::string findDesktopFileIcon(const std::wstring& processName) {
 					}
 				}
 				if (!iconName.empty()) {
+					// Check if iconName is a valid file path or use icon themes
 					if (std::filesystem::exists(iconName)) {
 						return iconName;
 					}
-					// Check icon theme directories here if needed
+					// Here you can add more logic to handle icon themes (e.g., hicolor)
 					return iconName;
 				}
 			}
@@ -70,19 +79,9 @@ std::string findDesktopFileIcon(const std::wstring& processName) {
 
 // Main function that modifies global loadedIcons
 void getIcon(const ProcessInfo& processInfo, void* handle) {
-	// Check if the process icon is already loaded
-	//if (loadedIcons.find(processInfo.processPath) != loadedIcons.end()) {
-	//	std::wcout << L"Icon already loaded for process: " << processInfo.processPath << std::endl;
-	//	return;
-	//}
 
-	// Load icon path from the processInfo or search in .desktop files
-	std::string iconPath;
-	if (!processInfo.iconPath.empty()) {
-		iconPath = std::string(processInfo.iconPath.begin(), processInfo.iconPath.end());
-	} else {
-		iconPath = findDesktopFileIcon(processInfo.processName);
-	}
+	// Search for the icon in .desktop files
+	std::string iconPath = findDesktopFileIcon(processInfo.processName);
 
 	if (iconPath.empty()) {
 		std::cerr << "Icon not found for process: "
