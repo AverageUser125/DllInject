@@ -31,6 +31,9 @@ else()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)	
 endif()
 
+# Disable CRT secure warnings
+add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+
 if(MSVC)
     # Set MSVC runtime library
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
@@ -39,11 +42,9 @@ if(MSVC)
     # Enable SIMD optimizations
     add_compile_options(/arch:AVX2)
 
-    # Disable CRT secure warnings
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
     # Show all warnings, just nice to have
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete")
+    # add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete)
 endif()
 
 project("${PROJECT_NAME}")

@@ -257,7 +257,7 @@ namespace imguiThemes
         style.WindowBorderSize = 1;
         style.ChildBorderSize = 1;
         style.PopupBorderSize = 1;
-        style.FrameBorderSize = is3D;
+        style.FrameBorderSize = static_cast<float>(is3D);
 
         style.WindowRounding = 3;
         style.ChildRounding = 3;
