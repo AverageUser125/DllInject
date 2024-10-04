@@ -15,44 +15,6 @@ static std::vector<ProcessInfo> sharedProcesses;
 void refreshOptions() {
 	EnumerateRunningApplications(sharedProcesses);
 }
-#ifndef __linux__
-GLuint LoadIconAsTexture(HICON hIcon) {
-	// Get the icon's dimensions
-	ICONINFO iconInfo;
-	GetIconInfo(hIcon, &iconInfo);
-
-	// Create a device context and a bitmap
-	HDC hdc = GetDC(NULL);
-	HBITMAP hBitmap = iconInfo.hbmColor; // Use the color bitmap
-	BITMAP bmp{};
-	GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-	// Create an OpenGL texture
-	GLuint textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-
-	// Set texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// Convert the bitmap to a texture
-	std::vector<BYTE> data(bmp.bmWidthBytes * bmp.bmHeight);
-	GetBitmapBits(hBitmap, data.size(), data.data());
-
-	// Upload the texture to OpenGL
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bmp.bmWidth, bmp.bmHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, data.data());
-
-	// Clean up
-	DeleteObject(iconInfo.hbmColor);
-	DeleteObject(iconInfo.hbmMask);
-	ReleaseDC(NULL, hdc);
-
-	return textureID;
-}
-#endif
 void RenderProcessSelector(std::vector<ProcessInfo> processes, const std::wstring& absoluteDllPath) {
 	static int selectedProcess = -1;
 	assert(processes.size() != 0);
