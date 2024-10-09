@@ -8,6 +8,8 @@
 #include "font.h"
 #include "gui.hpp"
 
+#define NO_CONSOLE
+
 int main() {
 	EnableDebugPrivilege();
 

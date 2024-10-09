@@ -5,6 +5,8 @@
 #define dlflags_offset 24
 #define file_path_offset 28
 #define page_size 4096
+    .section .note.GNU-stack,"",@progbits  # Explicitly mark stack as executable
+
 	.text
 	.global	injector_shellcode
 	.hidden	injector_shellcode

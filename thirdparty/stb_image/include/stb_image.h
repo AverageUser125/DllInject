@@ -343,7 +343,7 @@ RECENT REVISION HISTORY:
 
 inline void *STBIMAGE_CUSTOM_REALOC(void *p, size_t oldSize, size_t newsz)
 {
-	assert(p != nullptr);
+	// assert(p != nullptr);
 	void* newPtr = new char[newsz];
 
 	std::memcpy(newPtr, p, oldSize);

@@ -14,6 +14,9 @@ if(NOT WIN32)
 
     set_target_properties(injector_static PROPERTIES LINK_FLAGS "-Wl,-z,nx")
 
+    # Include directories
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
     target_include_directories(injector_static INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    # This is now done in the target that uses injector_static
 endif()

@@ -45,7 +45,8 @@ if(MSVC)
 else()
 if(NOT WIN32)
     # Show all warnings, just nice to have
-    add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-delete-incomplete -Wno-missing-field-initializers)
+    add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused -Wno-missing-field-initializers)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-delete-incomplete>) # warning from stb_image
 endif()
 endif()
 

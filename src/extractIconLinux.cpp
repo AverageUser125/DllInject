@@ -3,7 +3,6 @@
 #include <stb_image.h>
 #include <fstream>
 #include "extractIcon.hpp"
-
 std::map<std::wstring, GLuint> loadedIcons;
 
 static const std::string path2 = std::string(std::getenv("HOME")) + "/.local/share/applications/";
@@ -56,6 +55,8 @@ GLuint createTextureFromIconData(unsigned char* data, int width, int height) {
 
 // Function to get icon from .desktop files (simplified for demonstration)
 std::string findDesktopFileIcon(const std::wstring& processName) {
+
+	return "/home/user/.vs/DllInject/resources/app.png";
 	// Define the paths to search for .desktop files
 	const std::vector<std::string> searchPaths = {"/usr/share/applications/", path2};
 
